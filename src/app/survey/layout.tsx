@@ -3,10 +3,10 @@
 import React from "react";
 
 
-const SurveyWebPage: React.FC = () => {
+const WebSurveyPage: React.FC = () => {
   return (
     <></>
   );
 };
 
-export default SurveyWebPage;
+export default WebSurveyPage;
