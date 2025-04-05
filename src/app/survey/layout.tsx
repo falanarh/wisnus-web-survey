@@ -1,12 +1,18 @@
-"use client";
+import type { Metadata } from "next";
 
-import React from "react";
-
-
-const WebSurveyPage: React.FC = () => {
-  return (
-    <></>
-  );
+export const metadata: Metadata = {
+  title: "Survei Wisatawan Nusantara 2025",
+  description: "Survei Digital Wisatawan Nusantara oleh BPS RI"
 };
 
-export default WebSurveyPage;
+export default function SurveyLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <>
+      {children}
+    </>
+  );
+}
