@@ -1,8 +1,9 @@
 "use client";
 
+import ThemeSwitch from '@/components/survey/ThemeSwitch';
 import React, { useState } from 'react';
 
-const WebSurveyPage: React.FC = () => {
+const WebSurveyPage = () => {
     const [activeTab, setActiveTab] = useState('persetujuan');
     const [darkMode, setDarkMode] = useState(false);
 
@@ -10,11 +11,10 @@ const WebSurveyPage: React.FC = () => {
         { id: 'persetujuan', label: 'Persetujuan' },
         { id: 'survei', label: 'Survei' },
         { id: 'karakteristik', label: 'Karakteristik Responden' },
-        { id: 'reward', label: 'Reward' },
     ];
 
     return (
-        <div className={`flex w-full h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+        <div className={`flex w-full min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
             {/* Sidebar */}
             <aside className={`hidden md:flex flex-col basis-1/4 min-w-[250px] max-w-[300px] border-r ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'}`}>
                 {/* Sidebar Header */}
@@ -28,14 +28,27 @@ const WebSurveyPage: React.FC = () => {
                         <button
                             key={tab.id}
                             className={`text-left rounded-lg my-1 mx-5 p-3 ${activeTab === tab.id
-                                ? 'bg-[#05548d] text-white'
+                                ? 'bg-blue-800 text-white'
                                 : darkMode
-                                    ? 'text-gray-300 hover:bg-gray-700'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                    ? 'text-gray-300 hover:bg-text-[#565656]'
+                                    : 'text-[#565656] hover:bg-gray-100'
                                 }`}
                             onClick={() => setActiveTab(tab.id)}
                         >
-                            {tab.label}
+                            <p className='text-md font-bold'>
+                                {tab.label}
+                            </p>
+                            {tab.label === 'Persetujuan' && (
+                                <p className='text-sm'>
+                                    {tab.label}
+                                </p>
+                            )}
+
+                            {tab.label === 'Karakteristik Responden' && (
+                                <p className='text-sm'>
+                                    {tab.label}
+                                </p>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -76,90 +89,105 @@ const WebSurveyPage: React.FC = () => {
                         SURVEI WISATAWAN NUSANTARA 2024
                     </h1>
 
-                    {/* Dark Mode Toggle */}
+                    {/* Dark Mode Toggle - Replaced with new component */}
                     <div className="flex items-center">
-                        <div className="relative inline-block w-10 mr-2 align-middle select-none">
-                            <input
-                                type="checkbox"
-                                name="toggle"
-                                id="darkModeToggle"
-                                checked={darkMode}
-                                onChange={() => setDarkMode(!darkMode)}
-                                className="absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                                style={{
-                                    top: '0',
-                                    right: darkMode ? '0' : '4px',
-                                    transition: 'right 0.2s ease-in'
-                                }}
-                            />
-                            <label
-                                htmlFor="darkModeToggle"
-                                className={`block overflow-hidden h-6 rounded-full cursor-pointer ${darkMode ? 'bg-blue-500' : 'bg-gray-300'
-                                    }`}
-                            ></label>
-                        </div>
+                        <ThemeSwitch
+                            checked={darkMode}
+                            onChange={() => setDarkMode(!darkMode)}
+                        />
                     </div>
                 </header>
 
                 {/* Content */}
-                <section className="p-7">
-                    {activeTab === 'persetujuan' && (
-                        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 rounded-md`}>
-                            <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Persetujuan</h2>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                                Hai, yuk ikut berpartisipasi dalam Survei Wisatawan Nusantara 2024 yang diselenggarakan oleh Badan Pusat Statistik (BPS). Anda hanya perlu meluangkan waktu sekitar 10 (sepuluh) menit untuk mengisi survei ini.
-                            </p>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4 font-semibold`}>
-                                Ayo segera isi dengan lengkap dan submit survei ini. Jadilah bagian dari responden yang BERUNTUNG dan dapatkan rewards sesuai pilihan Anda.
-                            </p>
+                <section className="overflow-hidden h-[calc(100vh-89px)]">
+                    <div className="flex flex-col h-full overflow-y-auto">
+                        {activeTab === 'persetujuan' && (
+                            <div className={`bg-white p-6`}>
+                                <div className={`flex flex-col justify-center bg-gray-100 p-6 rounded-sm ${darkMode ? 'text-gray-300' : 'text-[#565656]'}`}>
+                                    <h2 className={`mb-4`}>
+                                        Hai, yuk ikut berpartisipasi dalam Survei Wisatawan Nusantara 2024 yang diselenggarakan oleh Badan Pusat Statistik (BPS). Anda hanya perlu meluangkan waktu sekitar 10 (sepuluh) menit untuk mengisi survei ini.
+                                    </h2>
 
+                                    <p className={`mb-6 font-bold`}>
+                                        Ayo segera isi dengan lengkap dan submit survei ini. Jadilah bagian dari responden yang BERUNTUNG dan dapatkan rewards sesuai pilihan Anda.
+                                    </p>
 
-                        </div>
-                    )}
+                                    <p className={`mb-6`}>
+                                        Dengan mengikuti survei ini, Anda memberikan persetujuan kepada BPS untuk menyimpan dan menganalisis jawaban atas pertanyaan survei. Mohon kerja samanya untuk menjawab pertanyaan berikut secara benar.
+                                    </p>
 
-                    {activeTab === 'survei' && (
-                        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 rounded-md`}>
-                            <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Survei</h2>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                Pertanyaan-pertanyaan survei akan ditampilkan di sini.
-                            </p>
+                                    <p className={`mb-6`}>
+                                        Kerahasiaan jawaban Anda dilindungi Undang-undang No.16 Tahun 1997 tentang Statistik. Partisipasi dan jawaban Anda sangat bermanfaat untuk menentukan arah kebijakan kepariwisataan di Indonesia.
+                                    </p>
 
+                                    <p>
+                                        Mohon centang kotak &quot;Saya setuju&quot; dengan mengklik kotak yang tersedia dan lanjut ke halaman berikutnya dengan mengklik tombol panah kanan biru
+                                        <span className="inline-flex items-center justify-center h-8 w-8 bg-blue-800 text-white rounded-full mx-2 align-middle">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                className="h-5 w-5"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M9 5l7 7-7 7"
+                                                />
+                                            </svg>
+                                        </span>
+                                        jika Anda setuju untuk memulai pengisian survei.
+                                    </p>
 
-                        </div>
-                    )}
+                                </div>
+                                <div className={`bg-gray-100 p-4 rounded-sm my-8 ${darkMode ? 'text-gray-300' : 'text-[#565656]'}`}>
+                                    <h3 className={`text-center font-semibold mb-2`}>Persetujuan Penggunaan Data Pribadi</h3>
+                                    <h4 className={`text-center mb-4 `}>Dari Responden Survei Wisatawan Nusantara 2024</h4>
 
-                    {activeTab === 'karakteristik' && (
-                        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 rounded-md`}>
-                            <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Karakteristik Responden</h2>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                Form untuk data karakteristik responden.
-                            </p>
+                                    <p className={`mb-4 `}>
+                                        Dengan penuh kesadaran dan tanpa paksaan, bersedia secara sukarela untuk memberikan informasi dan data pribadi saya yang meliputi:
+                                    </p>
 
+                                    <ol className="list-decimal pl-6 mb-4 space-y-1">
+                                        <li>Nomor telepon</li>
+                                        <li>Kode Provinsi dan Kabupaten/Kota asal, Kode Provinsi dan Kabupaten/Kota tujuan perjalanan (Untuk selanjutnya disebut &quot;Kode Lokasi&quot;)</li>
+                                        <li>Data terkait perjalanan pada periode Januari-Maret 2024</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        )}
 
-                        </div>
-                    )}
+                        {activeTab === 'survei' && (
+                            <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 rounded-md`}>
+                                <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Survei</h2>
+                                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    Pertanyaan-pertanyaan survei akan ditampilkan di sini.
+                                </p>
+                            </div>
+                        )}
 
-                    {activeTab === 'reward' && (
-                        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 rounded-md`}>
-                            <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Reward</h2>
-                            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                Informasi tentang reward untuk peserta survei.
-                            </p>
-
-
-                        </div>
-                    )}
+                        {activeTab === 'karakteristik' && (
+                            <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 rounded-md`}>
+                                <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Karakteristik Responden</h2>
+                                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    Form untuk data karakteristik responden.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </section>
 
                 {/* Tab Navigation with Arrows - Fixed at bottom */}
-                <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 w-1/2 bg-gray-100/50 rounded-full p-2 mb-4 flex justify-center items-center`}>
-                    <div className='flex items-center justify-between'>
+                <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 w-1/2  bg-[#b3b3b345] backdrop-blur-sm rounded-full p-2 mb-4 flex justify-center items-center`}>
+                    <div className='flex items-center justify-between px-4 gap-3'>
                         {/* Previous button */}
-                        <button
+                        {activeTab !== "persetujuan" && (<button
                             className={`flex items-center justify-center h-10 w-10 ${tabs.findIndex(tab => tab.id === activeTab) === 0
                                 ? 'opacity-50 cursor-not-allowed'
                                 : 'cursor-pointer'
-                                } bg-blue-600 text-white rounded-full mr-6`}
+                                } bg-blue-800 text-white rounded-full`}
                             onClick={() => {
                                 const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
                                 if (currentIndex > 0) {
@@ -171,19 +199,19 @@ const WebSurveyPage: React.FC = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
-                        </button>
+                        </button>)}
 
                         {/* Current tab name */}
-                        <div className={`text-center flex-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        <div className={`text-center flex-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'} font-medium`}>
                             {tabs.find(tab => tab.id === activeTab)?.label}
                         </div>
 
                         {/* Next button */}
-                        <button
+                        {activeTab !== "karakteristik" && (<button
                             className={`flex items-center justify-center h-10 w-10 ${tabs.findIndex(tab => tab.id === activeTab) === tabs.length - 1
                                 ? 'opacity-50 cursor-not-allowed'
                                 : 'cursor-pointer'
-                                } bg-blue-600 text-white rounded-full ml-6`}
+                                } bg-blue-800 text-white rounded-full`}
                             onClick={() => {
                                 const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
                                 if (currentIndex < tabs.length - 1) {
@@ -195,7 +223,7 @@ const WebSurveyPage: React.FC = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                        </button>
+                        </button>)}
                     </div>
                 </div>
             </main>
