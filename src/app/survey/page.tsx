@@ -1,4 +1,4 @@
-import WebSurvey from "@/components/survey/WebSurveyPage";
+import WebSurvey from "@/components/survey/WebSurvey";
 
 const WebSurveyPage = () => {
 
