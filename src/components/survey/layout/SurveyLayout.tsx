@@ -46,7 +46,7 @@ const SurveyLayout: React.FC<SurveyLayoutProps> = ({
         />
 
         {/* Content */}
-        <section className="overflow-hidden h-[calc(100vh-89px)] pb-24 md:pb-20">
+        <section className="overflow-hidden h-[calc(100vh-89px)]">
           <div className="flex flex-col h-full overflow-y-auto">
             {children}
           </div>
