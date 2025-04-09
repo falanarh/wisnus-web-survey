@@ -57,18 +57,18 @@ export const surveyQuestions: Question[] = [
     multiple: true,
     instruction: "Isian boleh lebih dari satu",
     options: [
-      "Januari 2024",
-      "Februari 2024",
-      "Maret 2024",
-      "April 2024",
-      "Mei 2024",
-      "Juni 2024",
-      "Juli 2024",
-      "Agustus 2024",
-      "September 2024",
-      "Oktober 2024",
-      "November 2024",
-      "Desember 2024",
+      "Januari 2025",
+      "Februari 2025",
+      "Maret 2025",
+      "April 2025",
+      "Mei 2025",
+      "Juni 2025",
+      "Juli 2025",
+      "Agustus 2025",
+      "September 2025",
+      "Oktober 2025",
+      "November 2025",
+      "Desember 2025",
     ],
     validation: {
       required: true,
@@ -253,8 +253,9 @@ export const surveyQuestions: Question[] = [
   },
   {
     code: "S017",
-    text: "Kegiatan apa saja yang Anda lakukan pada perjalanan ke {$kabkot} pada Bulan {$bulan}? (Dapat dipilih lebih dari satu)",
+    text: "Kegiatan apa saja yang Anda lakukan pada perjalanan ke {$kabkot} pada Bulan {$bulan}?",
     type: "select",
+    instruction: "Dapat dipilih lebih dari satu",
     multiple: true,
     options: [
       "Wisata bahari",
@@ -316,7 +317,7 @@ export const surveyQuestions: Question[] = [
     type: "text",
     unit: "Rp",
     additional_info:
-      "Total pengeluaran untuk transportasi selama perjalanan. Jika menggunakan angkutan pribadi, isikan pengeluaran pembelian BBM dan biaya tol.",
+      "Ket: Total pengeluaran untuk transportasi selama perjalanan. Jika menggunakan angkutan pribadi, isikan pengeluaran pembelian BBM dan biaya tol.",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
       required: true,
@@ -342,7 +343,7 @@ export const surveyQuestions: Question[] = [
     type: "text",
     unit: "Rp",
     additional_info:
-      "Termasuk belanja untuk keperluan pribadi selama perjalanan, seperti sabun, pasta gigi, sikat gigi, tisu, dsb",
+      "Ket: Termasuk belanja untuk keperluan pribadi selama perjalanan, seperti sabun, pasta gigi, sikat gigi, tisu, dsb",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
       required: true,
@@ -356,7 +357,7 @@ export const surveyQuestions: Question[] = [
     type: "text",
     unit: "Rp",
     additional_info:
-      "Tiket masuk objek wisata atau atraksi, seperti museum, taman, kebun binatang, candi, pendakian gunung, tari-tarian, konser, pertunjukkan, diving, dll",
+      "Ket: Tiket masuk objek wisata atau atraksi, seperti museum, taman, kebun binatang, candi, pendakian gunung, tari-tarian, konser, pertunjukkan, diving, dll",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
       required: true,
