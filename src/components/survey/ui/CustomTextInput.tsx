@@ -11,7 +11,6 @@ interface CustomTextInputProps {
   max?: number;
   pattern?: string;
   required?: boolean;
-  unit?: string;
 }
 
 const CustomTextInput: React.FC<CustomTextInputProps> = ({
@@ -25,7 +24,6 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   max,
   pattern,
   required,
-  unit
 }) => {
   const [error, setError] = useState<string | null>(null);
   const [isTouched, setIsTouched] = useState(false);
@@ -112,11 +110,6 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
           max={max}
           required={required}
         />
-        {unit && (
-          <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            {unit}
-          </span>
-        )}
       </div>
       
       {error && (

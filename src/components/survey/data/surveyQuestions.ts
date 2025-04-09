@@ -32,7 +32,7 @@ export const surveyQuestions: Question[] = [
   },
   {
     code: "S004",
-    text: "Provinsi manakah yang Anda kunjungi pada periode Januari 2024-Desember 2024?",
+    text: "Provinsi manakah yang Anda kunjungi pada periode Januari 2025 - {$currentMonth}?",
     type: "select",
     multiple: false,
     options: [],
