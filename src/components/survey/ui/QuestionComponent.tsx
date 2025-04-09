@@ -1,17 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Question as QuestionType } from '@/service/types/Question';
 import CustomRadioGroup from './CustomRadioButton';
 import CustomTextInput from './CustomTextInput';
-import CustomDropdown from './CustomDropdown';
+import LocationDropdown from './LocationDropdown';
 import { useSurvey } from '@/app/context/SurveyContext';
 
 const ADDITIONAL_INFO_CODES = ['KR004', 'KR005', 'KR006'];
 const PROVINCE_QUESTION_CODES = ['S002', 'S004'];
-
-interface Province {
-  code: string;
-  name: string;
-}
+const REGENCY_QUESTION_CODES = ['S003', 'S005'];
 
 interface QuestionProps {
   question: QuestionType;
@@ -20,9 +16,8 @@ interface QuestionProps {
 
 const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
   const { answers, updateAnswer } = useSurvey();
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading] = useState<boolean>(false);
+  const [error] = useState<string | null>(null);
   
   const { 
     code, 
@@ -35,38 +30,12 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     instruction 
   } = question;
 
-  // Fetch provinces for specific question codes
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      if (PROVINCE_QUESTION_CODES.includes(code) && type === "select") {
-        try {
-          setLoading(true);
-          setError(null);
-          
-          const response = await fetch('https://backend-conversational-survey.vercel.app/api/geographic/provinces');
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch provinces: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (data.success && Array.isArray(data.data)) {
-            setProvinces(data.data);
-          } else {
-            throw new Error('Invalid response format');
-          }
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'An unknown error occurred');
-          console.error('Error fetching provinces:', err);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchProvinces();
-  }, [code]);
+  // Get the related province question code for this regency question
+  const getRelatedProvinceCode = () => {
+    if (code === 'S003') return 'S002';
+    if (code === 'S005') return 'S004';
+    return null;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateAnswer(code, e.target.value);
@@ -96,15 +65,62 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     );
   };
 
-  // Get appropriate options for the question
-  const getOptions = () => {
-    if (PROVINCE_QUESTION_CODES.includes(code) && provinces.length > 0) {
-      // Use fetched provinces for province questions
-      return provinces.map(province => province.name);
+  // Get placeholder text based on question code
+  const getPlaceholder = () => {
+    if (code === 'S002') return 'Pilih provinsi tempat tinggal';
+    if (code === 'S004') return 'Pilih provinsi yang dikunjungi';
+    if (code === 'S003') return 'Pilih kabupaten/kota tempat tinggal';
+    if (code === 'S005') return 'Pilih kabupaten/kota yang dikunjungi';
+    return `Pilih ${text.toLowerCase()}`;
+  };
+
+  // Render location dropdown or standard input based on question type
+  const renderInput = () => {
+    // For province and regency questions, use the specialized LocationDropdown component
+    if ((PROVINCE_QUESTION_CODES.includes(code) || REGENCY_QUESTION_CODES.includes(code)) && type === "select") {
+      return (
+        <LocationDropdown
+          questionCode={code}
+          darkMode={darkMode}
+          placeholder={getPlaceholder()}
+          relatedProvinceCode={getRelatedProvinceCode()}
+        />
+      );
     }
     
-    // For other questions, use the provided options
-    return options;
+    // For standard select questions
+    if (type === "select" && options) {
+      return (
+        <CustomRadioGroup
+          name={code}
+          options={options}
+          selected={answers[code] || ""}
+          onChange={handleChange}
+          multiple={question.multiple}
+        />
+      );
+    }
+    
+    // For text input questions
+    if (type === "text") {
+      return (
+        <CustomTextInput
+          name={code}
+          type={validation.input_type || "text"}
+          placeholder={`Masukkan ${text.toLowerCase()}`}
+          darkMode={darkMode}
+          value={answers[code] || ""}
+          onChange={handleChange}
+          min={validation.min}
+          max={validation.max}
+          pattern={validation.pattern}
+          required={validation.required}
+          unit={unit}
+        />
+      );
+    }
+    
+    return null;
   };
 
   return (
@@ -164,42 +180,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
           </div>
         )}
 
-        {!loading && !error && type === "select" && getOptions() && (
-          PROVINCE_QUESTION_CODES.includes(code) ? (
-            <CustomDropdown
-              name={code}
-              options={getOptions() as string[]}
-              selected={answers[code] || ""}
-              onChange={handleChange}
-              darkMode={darkMode}
-              placeholder={code === "S002" ? "Pilih provinsi tempat tinggal" : "Pilih provinsi yang dikunjungi"}
-            />
-          ) : (
-            <CustomRadioGroup
-              name={code}
-              options={getOptions()}
-              selected={answers[code] || ""}
-              onChange={handleChange}
-              multiple={question.multiple}
-            />
-          )
-        )}
-
-        {type === "text" && (
-          <CustomTextInput
-            name={code}
-            type={validation.input_type || "text"}
-            placeholder={`Masukkan ${text.toLowerCase()}`}
-            darkMode={darkMode}
-            value={answers[code] || ""}
-            onChange={handleChange}
-            min={validation.min}
-            max={validation.max}
-            pattern={validation.pattern}
-            required={validation.required}
-            unit={unit}
-          />
-        )}
+        {!loading && !error && renderInput()}
       </div>
     </div>
   );

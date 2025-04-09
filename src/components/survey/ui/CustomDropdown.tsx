@@ -7,6 +7,7 @@ interface CustomDropdownProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   darkMode: boolean;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -15,7 +16,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   selected,
   onChange,
   darkMode,
-  placeholder = "Pilih opsi"
+  placeholder = "Pilih opsi",
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +69,12 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     }
   }, [isOpen]);
 
+  const handleDropdownClick = () => {
+    if (!disabled) {
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
     <div className="relative w-full" ref={dropdownRef}>
       {/* Selected value display / dropdown trigger */}
@@ -74,16 +82,22 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         className={`
           flex justify-between items-center w-full p-3 border rounded-md cursor-pointer
           ${isOpen ? 'border-blue-500' : darkMode ? 'border-gray-600' : 'border-gray-300'}
-          ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-700'}
+          ${disabled ? 
+            (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed') : 
+            (darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-700')
+          }
           transition-colors duration-200
         `}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleDropdownClick}
       >
         <div className="truncate">
           {selected || <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{placeholder}</span>}
         </div>
         <svg
-          className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''} ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+          className={`w-5 h-5 transition-transform duration-200 
+            ${isOpen ? 'transform rotate-180' : ''} 
+            ${disabled ? 'text-gray-400' : (darkMode ? 'text-gray-400' : 'text-gray-500')}
+          `}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -99,7 +113,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
       </div>
 
       {/* Dropdown menu */}
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className={`
           absolute z-10 w-full mt-1 overflow-hidden border rounded-md shadow-lg
           ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}
@@ -152,6 +166,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         type="hidden" 
         name={name} 
         value={selected || ''} 
+        disabled={disabled}
       />
     </div>
   );
