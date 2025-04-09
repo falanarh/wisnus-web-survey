@@ -7,7 +7,7 @@ export const surveyQuestions: Question[] = [
     type: "text",
     validation: {
       required: true,
-      pattern: "^[0-9]{7,15}$",
+      pattern: "/^(0[0-9]{7,14}|\+62[0-9]{7,12})$/",
     },
   },
   {

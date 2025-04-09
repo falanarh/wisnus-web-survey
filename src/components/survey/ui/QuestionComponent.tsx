@@ -13,7 +13,16 @@ interface QuestionProps {
 
 const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     const { answers, updateAnswer } = useSurvey();
-    const { code, text, type, options, validation, additional_info } = question;
+    const { 
+        code, 
+        text, 
+        type, 
+        options, 
+        validation, 
+        additional_info, 
+        unit,
+        instruction 
+    } = question;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         updateAnswer(code, e.target.value);
@@ -29,7 +38,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
         return (
             <>
                 {validation.required && <span className="text-red-500 ml-[5px]">*</span>}
-                <div className="dark:text-gray-400 text-sm font-semibold" style={{ color: "#565656" }}>
+                <div className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-[#565656]'}`}>
                     <p>{firstLine}</p>
                     {listItems.length > 0 && (
                         <ul className="list-disc pl-5 mt-1">
@@ -47,14 +56,14 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
         <div className="flex flex-col md:flex-row gap-4">
             {/* Question Section */}
             <div className="w-full md:w-1/3 dark:text-gray-300">
-                <span className="font-bold" style={{ color: "#565656" }}>
+                <span className={`font-bold ${darkMode ? 'text-gray-200' : 'text-[#565656]'}`}>
                     {text}
                 </span>
 
                 {additional_info && (
                     <>
                         {!ADDITIONAL_INFO_CODES.includes(code) && (
-                            <span className="dark:text-gray-400 text-sm font-semibold ml-[5px]" style={{ color: "#565656" }}>
+                            <span className={`text-sm font-semibold ml-[5px] ${darkMode ? 'text-gray-400' : 'text-[#565656]'}`}>
                                 {"(" + additional_info + ")"}
                                 {validation.required && <span className="text-red-500 ml-[5px]">*</span>}
                             </span>
@@ -66,6 +75,12 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
                 {!additional_info && validation.required && (
                     <span className="text-red-500 ml-[5px]">*</span>
                 )}
+
+                {instruction && (
+                    <div className={`mt-1 text-xs italic ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {instruction}
+                    </div>
+                )}
             </div>
 
             {/* Answer Section */}
@@ -76,6 +91,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
                         options={options}
                         selected={answers[code] || ""}
                         onChange={handleChange}
+                        multiple={question.multiple}
                     />
                 )}
 
@@ -89,6 +105,9 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
                         onChange={handleChange}
                         min={validation.min}
                         max={validation.max}
+                        pattern={validation.pattern}
+                        required={validation.required}
+                        unit={unit}
                     />
                 )}
             </div>
