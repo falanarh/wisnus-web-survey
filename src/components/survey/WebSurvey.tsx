@@ -5,6 +5,7 @@ import PersetujuanTab from './tabs/PersetujuanTab';
 import SurveiTab from './tabs/SurveiTab';
 import KarakteristikTab from './tabs/KarakteristikTab';
 import SurveyLayout from './layout/SurveyLayout';
+import { SurveyProvider } from '@/app/context/SurveyContext';
 
 const WebSurvey = () => {
   const [activeTab, setActiveTab] = useState('persetujuan');
@@ -31,17 +32,19 @@ const WebSurvey = () => {
   };
 
   return (
-    <SurveyLayout
-      darkMode={darkMode}
-      setDarkMode={setDarkMode}
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      tabs={tabs}
-    >
-      {renderActiveTab()}
-    </SurveyLayout>
+    <SurveyProvider>
+      <SurveyLayout
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        tabs={tabs}
+      >
+        {renderActiveTab()}
+      </SurveyLayout>
+    </SurveyProvider>
   );
 };
 

@@ -1,34 +1,52 @@
 import React from 'react';
 import styled from 'styled-components';
 
+interface OptionType {
+  text: string;
+  additional_info?: string;
+}
+
 interface CustomRadioGroupProps {
-    name: string;
-    options?: string[];
-    selected: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  name: string;
+  options?: Array<string | OptionType>;
+  selected: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({ name, options = [], selected, onChange }) => {
-    if (options.length === 0) {
-        return null;
-    }
-    return (
-        <StyledWrapper>
-            {options.map((option, index) => (
-                <label key={index} className="radio-button">
-                    <input
-                        type="radio"
-                        name={name}
-                        value={option}
-                        checked={selected === option}
-                        onChange={onChange}
-                    />
-                    <span className="radio" />
-                    {option}
-                </label>
-            ))}
-        </StyledWrapper>
-    );
+  if (options.length === 0) {
+    return null;
+  }
+  
+  return (
+    <StyledWrapper>
+      {options.map((option, index) => {
+        // Determine if this is a string option or an object option
+        const isObjectOption = typeof option === 'object' && option !== null;
+        const optionValue = isObjectOption ? (option as OptionType).text : option as string;
+        const additionalInfo = isObjectOption ? (option as OptionType).additional_info : undefined;
+        
+        return (
+          <label key={index} className="radio-button">
+            <input
+              type="radio"
+              name={name}
+              value={optionValue}
+              checked={selected === optionValue}
+              onChange={onChange}
+            />
+            <span className="radio" />
+            <div className="option-content">
+              <span className="option-text">{optionValue}</span>
+              {additionalInfo && (
+                <span className="option-info">{additionalInfo}</span>
+              )}
+            </div>
+          </label>
+        );
+      })}
+    </StyledWrapper>
+  );
 };
 
 const StyledWrapper = styled.div`
@@ -38,8 +56,8 @@ const StyledWrapper = styled.div`
     justify-content: flex-start;
     margin: 8px 0;
     position: relative;
-    align-items: center;
-    color: #333;
+    align-items: flex-start;
+    color: #565656;
     font-size: 14px;
     cursor: pointer;
   }
@@ -52,13 +70,14 @@ const StyledWrapper = styled.div`
   .radio {
     position: relative;
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     border: 2px solid #ccc;
     box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
     transform: translateZ(-25px);
     transition: all 0.3s ease-in-out;
+    margin-top: 2px;
   }
 
   .radio::before {
@@ -66,8 +85,8 @@ const StyledWrapper = styled.div`
     content: '';
     width: 7px;
     height: 7px;
-    top: 3px;
-    left: 3px;
+    top: 4px;
+    left: 4px;
     border-radius: 50%;
     background-color: #fff;
     box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.5);
@@ -83,6 +102,21 @@ const StyledWrapper = styled.div`
 
   .radio-button input[type="radio"]:checked + .radio::before {
     opacity: 1;
+  }
+  
+  .option-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .option-text {
+    margin-right: 8px;
+  }
+  
+  .option-info {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
   }
 `;
 
