@@ -5,6 +5,8 @@ interface SurveyContextType {
   answers: Record<string, string>;
   errors: Record<string, string>;
   updateAnswer: (questionCode: string, value: string) => void;
+  updateError: (questionCode: string, errorMessage: string) => void;
+  clearError: (questionCode: string) => void;
   isQuestionAnswered: (questionCode: string) => boolean;
   isQuestionValid: (question: Question) => boolean;
   validateQuestion: (question: Question) => boolean;
@@ -44,14 +46,36 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
       [questionCode]: value
     }));
     
-    // Clear error for this question when answered
+    // Clear error when answer is updated - this helps prevent validation loops
     if (errors[questionCode]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[questionCode];
-        return newErrors;
-      });
+      clearError(questionCode);
     }
+  };
+
+  const updateError = (questionCode: string, errorMessage: string) => {
+    setErrors(prev => {
+      // If error already exists with same message, don't update to prevent loops
+      if (prev[questionCode] === errorMessage) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [questionCode]: errorMessage
+      };
+    });
+  };
+
+  const clearError = (questionCode: string) => {
+    setErrors(prev => {
+      // If error doesn't exist, don't update to prevent loops
+      if (!prev[questionCode]) {
+        return prev;
+      }
+      
+      const newErrors = { ...prev };
+      delete newErrors[questionCode];
+      return newErrors;
+    });
   };
 
   const isQuestionAnswered = (questionCode: string) => {
@@ -64,15 +88,13 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
     
     // Check required validation
     if (validation.required && !value.trim()) {
-      setErrors(prev => ({
-        ...prev,
-        [code]: 'Bidang ini wajib diisi'
-      }));
+      updateError(code, 'Bidang ini wajib diisi');
       return false;
     }
     
     // If not required and empty, it's valid
     if (!value.trim()) {
+      clearError(code);
       return true;
     }
     
@@ -83,20 +105,14 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
         // Indonesian phone number validation
         const phoneRegex = /^(0[0-9]{7,14}|\+62[0-9]{7,12})$/;
         if (!phoneRegex.test(value)) {
-          setErrors(prev => ({
-            ...prev,
-            [code]: 'Masukkan nomor handphone yang valid. Nomor harus diawali "0" atau "+62" dan terdiri dari 8–15 digit.'
-          }));
+          updateError(code, 'Masukkan nomor handphone yang valid. Nomor harus diawali "0" atau "+62" dan terdiri dari 8–15 digit.');
           return false;
         }
       } else {
         // For other patterns
         try {
           if (!new RegExp(validation.pattern).test(value)) {
-            setErrors(prev => ({
-              ...prev,
-              [code]: 'Nilai tidak sesuai format'
-            }));
+            updateError(code, 'Nilai tidak sesuai format');
             return false;
           }
         } catch (e) {
@@ -109,20 +125,14 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
     // Check min validation for number inputs
     if (type === 'text' && validation.input_type === 'number' && 
         validation.min !== undefined && Number(value) < validation.min) {
-      setErrors(prev => ({
-        ...prev,
-        [code]: `Nilai minimum adalah ${validation.min}`
-      }));
+      updateError(code, `Nilai minimum adalah ${validation.min}`);
       return false;
     }
     
     // Check max validation for number inputs
     if (type === 'text' && validation.input_type === 'number' && 
         validation.max !== undefined && Number(value) > validation.max) {
-      setErrors(prev => ({
-        ...prev,
-        [code]: `Nilai maksimum adalah ${validation.max}`
-      }));
+      updateError(code, `Nilai maksimum adalah ${validation.max}`);
       return false;
     }
     
@@ -132,22 +142,13 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
       const requiredCount = 2; // Default value from the instruction
       
       if (selectedCount < requiredCount) {
-        setErrors(prev => ({
-          ...prev,
-          [code]: `Pilih minimal ${requiredCount} opsi`
-        }));
+        updateError(code, `Pilih minimal ${requiredCount} opsi`);
         return false;
       }
     }
     
     // Remove error if validation passes
-    if (errors[code]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[code];
-        return newErrors;
-      });
-    }
+    clearError(code);
     
     return true;
   };
@@ -178,6 +179,8 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
     answers,
     errors,
     updateAnswer,
+    updateError,
+    clearError,
     isQuestionAnswered,
     isQuestionValid,
     validateQuestion,

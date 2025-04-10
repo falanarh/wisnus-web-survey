@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSurvey } from '@/app/context/SurveyContext';
 
 interface CustomTextInputProps {
   name: string;
@@ -25,8 +26,9 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   pattern,
   required,
 }) => {
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [isTouched, setIsTouched] = useState(false);
+  const { updateError, clearError } = useSurvey();
   
   // Validate the input whenever value changes and the field has been touched
   useEffect(() => {
@@ -34,7 +36,9 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
     
     // Check required validation
     if (required && !value.trim()) {
-      setError('Bidang ini wajib diisi');
+      const errorMsg = 'Bidang ini wajib diisi';
+      setLocalError(errorMsg);
+      updateError(name, errorMsg);
       return;
     }
     
@@ -45,7 +49,9 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
         // Indonesian phone number validation
         const phoneRegex = /^(0[0-9]{7,14}|\+62[0-9]{7,12})$/;
         if (!phoneRegex.test(value)) {
-          setError('Masukkan nomor handphone yang valid. Nomor harus diawali "0" atau "+62" dan terdiri dari 8–15 digit.');
+          const errorMsg = 'Masukkan nomor handphone yang valid. Nomor harus diawali "0" atau "+62" dan terdiri dari 8–15 digit.';
+          setLocalError(errorMsg);
+          updateError(name, errorMsg);
           return;
         }
       } else {
@@ -53,7 +59,9 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
         try {
           const regex = new RegExp(pattern);
           if (!regex.test(value)) {
-            setError('Nilai tidak sesuai format yang diharapkan');
+            const errorMsg = 'Nilai tidak sesuai format yang diharapkan';
+            setLocalError(errorMsg);
+            updateError(name, errorMsg);
             return;
           }
         } catch (e) {
@@ -64,19 +72,26 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
     
     // Check min validation for number inputs
     if (type === 'number' && min !== undefined && value && Number(value) < min) {
-      setError(`Nilai minimum adalah ${min}`);
+      const errorMsg = `Nilai minimum adalah ${min}`;
+      setLocalError(errorMsg);
+      updateError(name, errorMsg);
       return;
     }
     
     // Check max validation for number inputs
     if (type === 'number' && max !== undefined && value && Number(value) > max) {
-      setError(`Nilai maksimum adalah ${max}`);
+      const errorMsg = `Nilai maksimum adalah ${max}`;
+      setLocalError(errorMsg);
+      updateError(name, errorMsg);
       return;
     }
     
     // If we get here, there's no error
-    setError(null);
-  }, [value, isTouched, required, pattern, min, max, type, name]);
+    if (localError) {
+      setLocalError(null);
+      clearError(name);
+    }
+  }, [value, isTouched]);  // Don't include updateError and clearError in dependencies
 
   const handleBlur = () => {
     setIsTouched(true);
@@ -97,7 +112,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
             p-2 
             border 
             rounded-md 
-            ${error ? 'border-red-500 text-[#565656]' : darkMode
+            ${localError ? 'border-red-500 text-[#565656]' : darkMode
               ? 'bg-gray-800 text-white border-gray-600 focus:border-blue-500 focus:ring-blue-500'
               : 'bg-white text-[#565656] border-gray-300 focus:border-blue-500 focus:ring-blue-500'}
             outline-none
@@ -112,8 +127,8 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
         />
       </div>
       
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
+      {localError && (
+        <p className="mt-1 text-sm text-red-500">{localError}</p>
       )}
     </div>
   );

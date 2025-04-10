@@ -253,12 +253,6 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
                         *Hanya menampilkan bulan hingga saat ini
                     </div>
                 )}
-
-                {/* {code === 'S007' && isS007Disabled && (
-                    <div className={`mt-1 text-xs italic ${darkMode ? 'text-red-400' : 'text-red-500'}`}>
-                        *Silakan pilih bulan perjalanan pada pertanyaan sebelumnya
-                    </div>
-                )} */}
             </div>
 
             {/* Answer Section */}
