@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
@@ -12,9 +14,120 @@ interface CustomRadioGroupProps {
   selected: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   multiple?: boolean;
+  darkMode?: boolean;
 }
 
-const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({ name, options = [], selected, onChange, multiple }) => {
+// Create a styled wrapper component
+const RadioWrapper = styled.div<{ $darkMode: boolean }>`
+  .radio-button {
+    display: flex;
+    gap: 16px; 
+    justify-content: flex-start;
+    margin: 8px 0;
+    position: relative;
+    align-items: flex-start;
+    color: ${props => props.$darkMode ? '#e5e7eb' : '#565656'};
+    font-size: 14px;
+    cursor: pointer;
+
+    @media (min-width: 768px) {
+      gap: 40px; 
+    }
+  }
+
+  .radio-button input[type="radio"],
+  .radio-button input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .radio {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid ${props => props.$darkMode ? '#4b5563' : '#ccc'};
+    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
+    transform: translateZ(-25px);
+    transition: all 0.3s ease-in-out;
+    margin-top: 2px;
+  }
+
+  .checkbox {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid ${props => props.$darkMode ? '#4b5563' : '#ccc'};
+    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
+    transform: translateZ(-25px);
+    transition: all 0.3s ease-in-out;
+    margin-top: 2px;
+  }
+
+  .radio::before,
+  .checkbox::before {
+    position: absolute;
+    content: '';
+    width: 10px;
+    height: 10px;
+    top: 2px;
+    left: 2px;
+    border-radius: 100%;
+    background-color: #fff;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .checkbox::before {
+    transform: rotate(45deg);
+    border-bottom: 2px solid white;
+    border-right: 2px solid white;
+    width: 6px;
+    height: 9px;
+    top: 1px;
+    left: 5px;
+  }
+
+  .radio-button input[type="radio"]:checked + .radio,
+  .radio-button input[type="checkbox"]:checked + .checkbox {
+    border-color: ${props => props.$darkMode ? '#3b82f6' : '#1B56FD'};
+    transform: translateZ(0px);
+    background-color: ${props => props.$darkMode ? '#3b82f6' : '#1B56FD'};
+  }
+
+  .radio-button input[type="radio"]:checked + .radio::before,
+  .radio-button input[type="checkbox"]:checked + .checkbox::before {
+    opacity: 1;
+  }
+  
+  .option-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .option-text {
+    margin-right: 8px;
+  }
+  
+  .option-info {
+    font-size: 12px;
+    color: ${props => props.$darkMode ? '#9ca3af' : '#888'};
+    margin-top: 4px;
+  }
+`;
+
+const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({
+  name,
+  options = [],
+  selected,
+  onChange,
+  multiple = false,
+  darkMode = false
+}) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>(
     selected ? selected.split(',') : []
   );
@@ -50,11 +163,10 @@ const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({ name, options = [],
 
     onChange(syntheticEvent);
   };
-  
+
   return (
-    <StyledWrapper>
+    <RadioWrapper $darkMode={darkMode}>
       {options.map((option, index) => {
-        // Determine if this is a string option or an object option
         const isObjectOption = typeof option === 'object' && option !== null;
         const optionValue = isObjectOption ? (option as OptionType).text : option as string;
         const additionalInfo = isObjectOption ? (option as OptionType).additional_info : undefined;
@@ -88,119 +200,8 @@ const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({ name, options = [],
           </label>
         );
       })}
-    </StyledWrapper>
+    </RadioWrapper>
   );
 };
-
-const StyledWrapper = styled.div`
-  .radio-button {
-    display: flex;
-    gap: 40px;
-    justify-content: flex-start;
-    margin: 8px 0;
-    position: relative;
-    align-items: flex-start;
-    color: #565656;
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  .radio-button input[type="radio"],
-  .radio-button input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-  }
-
-  .radio {
-    position: relative;
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid #ccc;
-    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
-    transform: translateZ(-25px);
-    transition: all 0.3s ease-in-out;
-    margin-top: 2px;
-  }
-
-  .checkbox {
-    position: relative;
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    border: 2px solid #ccc;
-    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
-    transform: translateZ(-25px);
-    transition: all 0.3s ease-in-out;
-    margin-top: 2px;
-  }
-
-  .radio::before {
-    position: absolute;
-    content: '';
-    width: 7px;
-    height: 7px;
-    top: 4px;
-    left: 4px;
-    border-radius: 50%;
-    background-color: #fff;
-    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transition: all 0.3s ease-in-out;
-  }
-
-  .checkbox::before {
-    position: absolute;
-    content: '';
-    width: 10px;
-    height: 10px;
-    top: 2px;
-    left: 2px;
-    background-color: #fff;
-    opacity: 0;
-    transition: all 0.3s ease-in-out;
-    transform: rotate(45deg);
-    border-bottom: 2px solid white;
-    border-right: 2px solid white;
-    width: 6px;
-    height: 9px;
-    top: 1px;
-    left: 5px;
-  }
-
-  .radio-button input[type="radio"]:checked + .radio {
-    border-color: #1B56FD;
-    transform: translateZ(0px);
-    background-color: #1B56FD;
-  }
-
-  .radio-button input[type="checkbox"]:checked + .checkbox {
-    border-color: #1B56FD;
-    transform: translateZ(0px);
-    background-color: #1B56FD;
-  }
-
-  .radio-button input[type="radio"]:checked + .radio::before,
-  .radio-button input[type="checkbox"]:checked + .checkbox::before {
-    opacity: 1;
-  }
-  
-  .option-content {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .option-text {
-    margin-right: 8px;
-  }
-  
-  .option-info {
-    font-size: 12px;
-    color: #888;
-    margin-top: 4px;
-  }
-`;
 
 export default CustomRadioGroup;

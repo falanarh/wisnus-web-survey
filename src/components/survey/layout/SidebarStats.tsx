@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSurvey } from '@/app/context/SurveyContext';
+import { useSurvey } from '@/context/SurveyContext';
 import { surveyQuestions } from '../data/surveyQuestions';
 import { characteristicQuestions } from '../data/characteristicQuestions';
 

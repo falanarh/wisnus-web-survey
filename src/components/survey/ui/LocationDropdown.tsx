@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CustomDropdown from './CustomDropdown';
-import { useSurvey } from '@/app/context/SurveyContext';
+import { useSurvey } from '@/context/SurveyContext';
 
 interface Province {
     code: string;

@@ -1,16 +1,39 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PersetujuanTab from './tabs/PersetujuanTab';
 import SurveiTab from './tabs/SurveiTab';
 import KarakteristikTab from './tabs/KarakteristikTab';
+import { SurveyProvider } from '@/context/SurveyContext';
+import { useTheme } from '@/components/other/ThemeProvider';
 import SurveyLayout from './layout/SurveyLayout';
-import { SurveyProvider } from '@/app/context/SurveyContext';
 
 const WebSurvey = () => {
-  const [activeTab, setActiveTab] = useState('persetujuan');
-  const [darkMode, setDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme } = useTheme();
+  
+  // Initialize activeTab with a function to prevent unnecessary initial renders
+  const [activeTab, setActiveTab] = useState(() => {
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('surveyActiveTab') || 'persetujuan';
+    }
+    return 'persetujuan';
+  });
+
+  // Handle tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    localStorage.setItem('surveyActiveTab', tab);
+  };
+
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDarkMode = theme === 'dark';
 
   const tabs = [
     { id: 'persetujuan', label: 'Persetujuan' },
@@ -21,25 +44,29 @@ const WebSurvey = () => {
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'persetujuan':
-        return <PersetujuanTab darkMode={darkMode} />;
+        return <PersetujuanTab darkMode={isDarkMode} />;
       case 'survei':
-        return <SurveiTab darkMode={darkMode} />;
+        return <SurveiTab darkMode={isDarkMode} />;
       case 'karakteristik':
-        return <KarakteristikTab darkMode={darkMode} />;
+        return <KarakteristikTab darkMode={isDarkMode} />;
       default:
-        return <PersetujuanTab darkMode={darkMode} />;
+        return <PersetujuanTab darkMode={isDarkMode} />;
     }
   };
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <SurveyProvider>
       <SurveyLayout
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        darkMode={isDarkMode}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange} // Use the new handler
         tabs={tabs}
       >
         {renderActiveTab()}

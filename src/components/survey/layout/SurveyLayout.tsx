@@ -5,9 +5,8 @@ import NavTabs from './NavTabs';
 interface SurveyLayoutProps {
   children: React.ReactNode;
   darkMode: boolean;
-  setDarkMode: (dark: boolean) => void;
   sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
+  setSidebarOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   tabs: Array<{ id: string; label: string }>;
@@ -16,7 +15,6 @@ interface SurveyLayoutProps {
 const SurveyLayout: React.FC<SurveyLayoutProps> = ({
   children,
   darkMode,
-  setDarkMode,
   sidebarOpen,
   setSidebarOpen,
   activeTab,
@@ -39,8 +37,6 @@ const SurveyLayout: React.FC<SurveyLayoutProps> = ({
       <main className={`flex-1 w-full md:w-auto ${darkMode ? 'bg-gray-800' : 'bg-white'} relative`}>
         {/* Header */}
         <Header
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />

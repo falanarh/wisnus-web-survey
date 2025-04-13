@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSurvey } from '@/app/context/SurveyContext';
+import { useSurvey } from '@/context/SurveyContext';
 
 interface CustomTextInputProps {
   name: string;

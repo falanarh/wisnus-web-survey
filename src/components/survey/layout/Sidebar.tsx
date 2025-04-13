@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import SidebarStats from './SidebarStats';
 
 interface SidebarProps {
@@ -18,6 +18,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab,
   tabs
 }) => {
+  const handleOverlayClick = useCallback(() => {
+    setSidebarOpen(false);
+  }, [setSidebarOpen]);
+
+  const handleTabClick = useCallback((tabId: string) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false);
+  }, [setActiveTab, setSidebarOpen]);
+
   return (
     <aside
       className={`${sidebarOpen ? 'fixed inset-0 z-40' : 'hidden'} md:relative md:flex md:flex-col md:basis-1/4 md:min-w-[250px] md:max-w-[300px] border-r ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'} transition-all duration-300 ease-in-out`}
@@ -25,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Overlay for mobile - closes sidebar when clicking outside */}
       <div
         className={`${sidebarOpen ? 'block fixed inset-0 bg-black bg-opacity-50 z-30' : 'hidden'} md:hidden`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={handleOverlayClick}
       ></div>
 
       {/* Sidebar content container */}
@@ -33,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Close button - mobile only */}
         <button
           className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-gray-700"
-          onClick={() => setSidebarOpen(false)}
+          onClick={handleOverlayClick}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -56,10 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   ? 'text-gray-300 hover:bg-gray-700'
                   : 'text-[#565656] hover:bg-gray-100'
                 }`}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSidebarOpen(false); // Close sidebar on mobile after selection
-              }}
+              onClick={() => handleTabClick(tab.id)}
             >
               <p className='text-md font-bold'>
                 {tab.label}

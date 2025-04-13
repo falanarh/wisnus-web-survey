@@ -1,26 +1,30 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import ThemeSwitch from '../ui/ThemeSwitch';
+import { useTheme } from '@/components/other/ThemeProvider';
 
 interface HeaderProps {
-  darkMode: boolean;
-  setDarkMode: (dark: boolean) => void;
   sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
+  setSidebarOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
-  darkMode,
-  setDarkMode,
   sidebarOpen,
   setSidebarOpen
 }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, [setSidebarOpen]);
+
   return (
-    <header className={`border-b flex justify-between items-center ${darkMode ? 'border-gray-700' : 'border-gray-300'} p-4 md:p-7`}>
+    <header className={`border-b flex justify-between items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} p-4 md:p-7`}>
       {/* Mobile sidebar toggle button */}
       {!sidebarOpen && (
         <button
-          className={`md:hidden p-2 rounded-md ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-white text-gray-700'} shadow-md`}
-          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`md:hidden p-2 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-white text-gray-700'} shadow-md`}
+          onClick={toggleSidebar}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -34,16 +38,13 @@ const Header: React.FC<HeaderProps> = ({
         </button>
       )}
 
-      <h1 className={`text-lg md:text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-600'} ml-3 md:ml-0`}>
+      <h1 className={`text-lg md:text-2xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-600'} ml-3 md:ml-0`}>
         SURVEI WISATAWAN NUSANTARA 2024
       </h1>
 
       {/* Dark Mode Toggle */}
       <div className="flex items-center">
-        <ThemeSwitch
-          checked={darkMode}
-          onChange={() => setDarkMode(!darkMode)}
-        />
+        <ThemeSwitch/>
       </div>
     </header>
   );

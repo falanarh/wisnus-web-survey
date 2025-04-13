@@ -1,15 +1,49 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #1a41c9;
+  --primary-hover: #1537b0;
+  --secondary: #45e3c6;
+  --secondary-hover: #3dcfb4;
+  --accent: #f8f9fc;
+  --text-primary: #374151;
+  --text-secondary: #6b7280;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-[--primary] hover:bg-[--primary-hover] text-white transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-[--secondary] hover:bg-[--secondary-hover] text-white transition-colors duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--primary] focus:border-transparent outline-none;
+  }
+
+  .select-field {
+    @apply w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--primary] focus:border-transparent outline-none;
+  }
+
+  .nav-link {
+    @apply px-4 py-2 text-[--text-secondary] hover:text-[--primary] transition-colors duration-200;
+  }
+
+  .nav-link-active {
+    @apply px-4 py-2 text-[--primary] font-medium border-b-2 border-[--primary];
+  }
 }
 
 @media (prefers-color-scheme: dark) {
