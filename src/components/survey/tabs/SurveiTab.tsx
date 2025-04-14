@@ -1,6 +1,7 @@
 import React from 'react';
 import { surveyQuestions } from '../data/surveyQuestions';
 import QuestionComponent from '../ui/QuestionComponent';
+import { useSurvey } from '@/context/SurveyContext';
 
 
 interface SurveiTabProps {
@@ -8,6 +9,20 @@ interface SurveiTabProps {
 }
 
 const SurveiTab: React.FC<SurveiTabProps> = ({ darkMode }) => {
+  const { isLoading } = useSurvey();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Memuat data survei...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`p-5 md:p-7 rounded-md`}>

@@ -1,5 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Question } from '@/service/types/Question';
+import { submitSurveyResponse, getSurveySession } from '@/services/survey/surveyService';
+import { getUserData } from '@/services/auth';
+import { surveyQuestions } from '@/components/survey/data/surveyQuestions';
+import { characteristicQuestions } from '@/components/survey/data/characteristicQuestions';
 
 interface SurveyContextType {
   answers: Record<string, string>;
@@ -16,6 +20,8 @@ interface SurveyContextType {
     error: number;
     total: number;
   };
+  sessionId: string | null;
+  isLoading: boolean;
 }
 
 const SurveyContext = createContext<SurveyContextType | undefined>(undefined);
@@ -33,22 +39,99 @@ interface SurveyProviderProps {
   initialAnswers?: Record<string, string>;
 }
 
-export const SurveyProvider: React.FC<SurveyProviderProps> = ({ 
-  children, 
-  initialAnswers = {} 
-}) => {
-  const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers);
+export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const updateAnswer = (questionCode: string, value: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionCode]: value
-    }));
-    
-    // Clear error when answer is updated - this helps prevent validation loops
-    if (errors[questionCode]) {
-      clearError(questionCode);
+  // Load survey session data on mount
+  useEffect(() => {
+    const loadSurveySession = async () => {
+      try {
+        const userData = getUserData();
+        if (!userData?.activeSurveySessionId) {
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await getSurveySession(userData.activeSurveySessionId);
+
+        if (response.success && response.data) {
+          setSessionId(response.data._id);
+          
+          // Convert responses to answers format
+          const sessionAnswers = response.data.responses.reduce((acc, curr) => ({
+            ...acc,
+            [curr.question_code]: String(curr.valid_response)
+          }), {});
+          
+          setAnswers(sessionAnswers);
+        }
+      } catch (error) {
+        console.error('Error loading survey session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSurveySession();
+  }, []);
+
+  const updateAnswer = async (questionCode: string, value: string) => {
+    try {
+      // Update local state first for better UX
+      setAnswers(prev => ({
+        ...prev,
+        [questionCode]: value
+      }));
+
+      // Clear error if exists
+      if (errors[questionCode]) {
+        clearError(questionCode);
+      }
+
+      // Get the question from either survey or characteristic questions
+      const question = [...surveyQuestions, ...characteristicQuestions]
+        .find(q => q.code === questionCode);
+
+      if (!question) {
+        throw new Error('Question not found');
+      }
+
+      // For text inputs, validate before submitting to API
+      if (question.type === 'text') {
+        const isInvalid = validateQuestion(question);
+        if (isInvalid) {
+          console.error('Validation failed for question:', questionCode);
+          // Don't submit to API if validation fails
+          return;
+        }
+      }
+
+      // Submit to API if session exists and validation passed
+      if (sessionId) {
+        const response = await submitSurveyResponse(sessionId, {
+          question_code: questionCode,
+          valid_response: value
+        });
+
+        if (!response.success) {
+          throw new Error(response.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating answer:', error);
+      // Only revert state if API call failed (not validation error)
+      if (sessionId) {
+        setAnswers(prev => {
+          const newAnswers = { ...prev };
+          delete newAnswers[questionCode];
+          return newAnswers;
+        });
+      }
+      updateError(questionCode, error instanceof Error ? error.message : 'Failed to save response');
+      throw error;
     }
   };
 
@@ -185,10 +268,14 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({
     isQuestionValid,
     validateQuestion,
     getCompletionStatus,
+    sessionId
   };
 
   return (
-    <SurveyContext.Provider value={value}>
+    <SurveyContext.Provider value={{
+      ...value,
+      isLoading
+    }}>
       {children}
     </SurveyContext.Provider>
   );

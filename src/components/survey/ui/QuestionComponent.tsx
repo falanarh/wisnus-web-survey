@@ -32,7 +32,7 @@ interface QuestionProps {
 const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
   const { answers, updateAnswer } = useSurvey();
   const [loading] = useState<boolean>(false);
-  const [error] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     code,
@@ -111,8 +111,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     return null;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateAnswer(code, e.target.value);
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSubmitError(null); // Clear previous submit error
+
+    try {
+      await updateAnswer(question.code, newValue);
+    } catch (error) {
+      // Only show submit error if it's not a validation error
+      if (error instanceof Error && !error.message.includes('validation')) {
+        setSubmitError(error.message);
+      }
+    }
   };
 
   const renderAdditionalInfo = () => {
@@ -353,7 +363,19 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
           </div>
         )}
 
-        {error && (
+        {submitError && (
+          <div className="text-red-500 text-sm mt-2">
+            {submitError}
+          </div>
+        )}
+
+        {loading && (
+          <div className="text-blue-500 text-sm mt-2">
+            Menyimpan...
+          </div>
+        )}
+
+        {/* {error && (
           <div className="py-4 text-sm text-red-500">
             Error: {error}
             <button
@@ -363,9 +385,9 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
               Muat ulang
             </button>
           </div>
-        )}
+        )} */}
 
-        {!loading && !error && renderInput()}
+        {!loading && renderInput()}
       </div>
     </div>
   );

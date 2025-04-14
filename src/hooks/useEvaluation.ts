@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Evaluation,
-  initializeEvaluation,
-  submitAnswer,
-  completeEvaluation,
-  getUserLatestEvaluation,
   EvaluationQuestionItem,
+  getEvaluationBySessionId,
+  createSurveyEvaluation,
+  SurveyEvaluation,
+  EvaluationAnswers,
+  submitEvaluationAnswer,
 } from "@/services/survey/evaluation";
 import { evaluationQuestions } from "@/components/survey/evaluation/constants";
 
@@ -14,7 +14,7 @@ interface UseEvaluationProps {
 }
 
 export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
-  const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [evaluation, setEvaluation] = useState<SurveyEvaluation | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<EvaluationQuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,78 +34,86 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
     async function loadOrInitializeEvaluation() {
       if (!isMounted) return;
 
+      if (!sessionId) {
+        setError("Session ID is required to load evaluation.");
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
       try {
-        // First check if user has an active evaluation
-        const latestResponse = await getUserLatestEvaluation();
+        // Try to get existing evaluation for the session
+        const evaluationResponse = await getEvaluationBySessionId(sessionId);
 
         if (!isMounted) return;
 
+        // If evaluation exists and is not completed
         if (
-          latestResponse.success &&
-          latestResponse.data &&
-          !latestResponse.data.completed
+          evaluationResponse.success &&
+          evaluationResponse.data &&
+          !evaluationResponse.data.completed
         ) {
-          // User has an incomplete evaluation, use it
-          const existingEvaluation = latestResponse.data;
+          const existingEvaluation = evaluationResponse.data;
           setEvaluation(existingEvaluation);
 
-          // Figure out which question we're on
-          const completedCount = existingEvaluation.answers
-            ? Object.keys(existingEvaluation.answers).length
-            : 0;
-          setCurrentQuestionIndex(completedCount);
-        } else {
-          // Initialize a new evaluation
-          const response = await getUserLatestEvaluation();
+          // Calculate completed questions count
+          const completedCount = Object.keys(
+            existingEvaluation.answers || {}
+          ).length;
+          setCurrentQuestionIndex(
+            Math.min(completedCount, evaluationQuestions.length - 1)
+          );
+          return;
+        }
+
+        // If no evaluation exists or previous one was completed, create new
+        if (
+          !evaluationResponse.success &&
+          evaluationResponse.message ===
+            "Survey evaluation not found for this session"
+        ) {
+          const newEvaluationResponse = await createSurveyEvaluation(sessionId);
 
           if (!isMounted) return;
 
-          if (response.success && response.data) {
-            setEvaluation(response.data);
-            setIsComplete(response.data.completed);
+          if (newEvaluationResponse.success && newEvaluationResponse.data) {
+            setEvaluation(newEvaluationResponse.data);
             setCurrentQuestionIndex(0);
-          } else {
-            throw new Error(
-              response.message || "Failed to initialize evaluation"
-            );
+            return;
           }
-        }
-      } catch (err) {
-        if (
-          err instanceof Error &&
-          err.message === "No evaluation found for this user"
-        ) {
-          // Initialize a new evaluation
-          const initResponse = await initializeEvaluation({
-            session_id: sessionId,
-          });
 
-          if (!isMounted) return;
-
-          if (initResponse.success && initResponse.data) {
-            setEvaluation(initResponse.data);
-            setCurrentQuestionIndex(0);
-          } else {
-            throw new Error(
-              initResponse.message || "Failed to initialize evaluation"
-            );
-          }
-        }
-
-        if (!isMounted) return;
-
-        console.error("Error loading evaluation:", err);
-        if (
-          err instanceof Error &&
-          err.message !== "No evaluation found for this user"
-        ) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load evaluation"
+          throw new Error(
+            newEvaluationResponse.message || "Failed to create evaluation"
           );
         }
+
+        // Handle other error cases
+        throw new Error(
+          evaluationResponse.message || "Failed to load evaluation"
+        );
+      } catch (err) {
+        if (!isMounted) return;
+
+        if (
+          err instanceof Error &&
+          err.message === "Survey evaluation not found for this session"
+        ) {
+          const newEvaluationResponse = await createSurveyEvaluation(sessionId);
+
+          if (!isMounted) return;
+
+          if (newEvaluationResponse.success && newEvaluationResponse.data) {
+            setEvaluation(newEvaluationResponse.data);
+            setCurrentQuestionIndex(0);
+            return;
+          }
+        }
+
+        console.error("Error in evaluation flow:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load evaluation"
+        );
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -141,71 +149,83 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
 
   // Submit answer to current question
   const submitQuestionAnswer = useCallback(
-    async (questionId: string, value: number | string) => {
-      if (!evaluation) return;
+    async (questionId: keyof EvaluationAnswers, value: number | string) => {
+      if (!evaluation?._id) {
+        setError("No active evaluation found");
+        return;
+      }
+
+      if (evaluation.completed) {
+        setError("Cannot modify completed evaluation");
+        return;
+      }
 
       setIsSubmitting(true);
       setError(null);
 
       try {
-        const response = await submitAnswer({
-          evaluation_id: evaluation._id,
-          question_id: questionId,
-          value,
-        });
-
-        if (response.success && response.data) {
-          setEvaluation(response.data);
-
-          // Move to next question if available
-          if (currentQuestionIndex < evaluationQuestions.length - 1) {
-            setCurrentQuestionIndex((prev) => prev + 1);
-          } else {
-            // This was the last question
-            await finalizeEvaluation();
+        // Validate input values
+        const validateInput = () => {
+          if (questionId === "mental_effort") {
+            if (typeof value !== "number" || value < 1 || value > 9) {
+              throw new Error("Mental effort rating must be between 1 and 9");
+            }
+          } else if (questionId === "overall_experience") {
+            if (typeof value !== "string" || value.length > 1000) {
+              throw new Error(
+                "Overall experience must not exceed 1000 characters"
+              );
+            }
+          } else if (typeof value !== "number" || value < 1 || value > 7) {
+            throw new Error(
+              `${questionId.replace(/_/g, " ")} rating must be between 1 and 7`
+            );
           }
-        } else {
+        };
+
+        validateInput();
+
+        // Prepare updated answers
+        const updatedAnswers: Partial<EvaluationAnswers> = {
+          ...evaluation.answers,
+          [questionId]: value,
+        };
+
+        // Submit to API
+        const response = await submitEvaluationAnswer(
+          evaluation._id,
+          updatedAnswers
+        );
+
+        if (!response.success || !response.data) {
           throw new Error(response.message || "Failed to submit answer");
         }
+
+        // Update local state
+        setEvaluation(response.data);
+
+        // Update completion status based on API response
+        if (response.data.completed) {
+          setIsComplete(true);
+          // You might want to trigger any completion UI here
+          return;
+        }
+
+        // Only move to next question if not complete
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
+        }
       } catch (err) {
-        console.error("Error submitting answer:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to submit answer"
-        );
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to submit answer";
+        console.error("Error submitting answer:", errorMessage);
+        setError(errorMessage);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [currentQuestionIndex, evaluation]
+    [currentQuestionIndex, evaluation, questions.length]
   );
-
-  // Finalize the evaluation
-  const finalizeEvaluation = useCallback(async () => {
-    if (!evaluation) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await completeEvaluation({
-        evaluation_id: evaluation._id,
-      });
-
-      if (response.success && response.data) {
-        setEvaluation(response.data);
-        setIsComplete(true);
-      } else {
-        throw new Error(response.message || "Failed to complete evaluation");
-      }
-    } catch (err) {
-      console.error("Error completing evaluation:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to complete evaluation"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [evaluation]);
 
   // Navigate to previous question
   const goToPreviousQuestion = useCallback(() => {
@@ -241,7 +261,6 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
     isComplete,
     progress,
     submitQuestionAnswer,
-    finalizeEvaluation,
     goToPreviousQuestion,
     goToQuestion,
   };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSurvey } from '@/context/SurveyContext';
 
 interface CustomTextInputProps {
@@ -29,69 +29,65 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   const [localError, setLocalError] = useState<string | null>(null);
   const [isTouched, setIsTouched] = useState(false);
   const { updateError, clearError } = useSurvey();
-  
+  const inputRef = useRef<HTMLInputElement>(null);
+
   // Validate the input whenever value changes and the field has been touched
   useEffect(() => {
     if (!isTouched) return;
     
-    // Check required validation
-    if (required && !value.trim()) {
-      const errorMsg = 'Bidang ini wajib diisi';
-      setLocalError(errorMsg);
-      updateError(name, errorMsg);
-      return;
-    }
-    
-    // Check pattern validation
-    if (pattern && value.trim()) {
-      // For phone number validation, use a specific pattern regardless of what's passed
-      if (name === 'S001' || name.includes('handphone')) {
-        // Indonesian phone number validation
-        const phoneRegex = /^(0[0-9]{7,14}|\+62[0-9]{7,12})$/;
-        if (!phoneRegex.test(value)) {
-          const errorMsg = 'Masukkan nomor handphone yang valid. Nomor harus diawali "0" atau "+62" dan terdiri dari 8–15 digit.';
+    const validate = () => {
+      try {
+        // Check required validation
+        if (required && !value.trim()) {
+          const errorMsg = 'Bidang ini wajib diisi';
           setLocalError(errorMsg);
           updateError(name, errorMsg);
           return;
         }
-      } else {
-        // For other patterns
-        try {
-          const regex = new RegExp(pattern);
-          if (!regex.test(value)) {
-            const errorMsg = 'Nilai tidak sesuai format yang diharapkan';
+
+        // For phone number validation
+        if (name === 'S001' || name.includes('handphone')) {
+          // Fixed regex pattern by escaping the + and properly grouping
+          const phoneRegex = /^(0[0-9]{7,14}|\+62[0-9]{7,12})$/;
+          const isValidPhone = phoneRegex.test(value);
+          
+          if (value && !isValidPhone) {
+            const errorMsg = 'Masukkan nomor handphone yang valid. Nomor harus diawali "0" atau "+62" dan terdiri dari 8–15 digit.';
             setLocalError(errorMsg);
             updateError(name, errorMsg);
             return;
           }
-        } catch (e) {
-          console.error('Invalid regex pattern:', pattern, e);
         }
+
+        // Pattern validation
+        if (pattern && value.trim()) {
+          try {
+            const regex = new RegExp(pattern);
+            if (!regex.test(value)) {
+              const errorMsg = 'Nilai tidak sesuai format yang diharapkan';
+              setLocalError(errorMsg);
+              updateError(name, errorMsg);
+              return;
+            }
+          } catch (e) {
+            console.error('Invalid regex pattern:', pattern, e);
+          }
+        }
+
+        // Clear error if validation passes
+        if (localError) {
+          setLocalError(null);
+          clearError(name);
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
       }
-    }
-    
-    // Check min validation for number inputs
-    if (type === 'number' && min !== undefined && value && Number(value) < min) {
-      const errorMsg = `Nilai minimum adalah ${min}`;
-      setLocalError(errorMsg);
-      updateError(name, errorMsg);
-      return;
-    }
-    
-    // Check max validation for number inputs
-    if (type === 'number' && max !== undefined && value && Number(value) > max) {
-      const errorMsg = `Nilai maksimum adalah ${max}`;
-      setLocalError(errorMsg);
-      updateError(name, errorMsg);
-      return;
-    }
-    
-    // If we get here, there's no error
-    if (localError) {
-      setLocalError(null);
-      clearError(name);
-    }
-  }, [value, isTouched]);  // Don't include updateError and clearError in dependencies
+    };
+
+    // Use debounce to prevent too many validations
+    const timeoutId = setTimeout(validate, 300);
+    return () => clearTimeout(timeoutId);
+  }, [value, isTouched, name, pattern, required, updateError, clearError]);
 
   const handleBlur = () => {
     setIsTouched(true);
@@ -99,8 +95,9 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
 
   return (
     <div className="flex flex-col w-full">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative">
         <input
+          ref={inputRef}
           id={name}
           name={name}
           type={type}

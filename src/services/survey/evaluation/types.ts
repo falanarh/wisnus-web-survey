@@ -1,20 +1,20 @@
 import { ReactNode } from "react";
 
-export interface Evaluation {
+export interface EvaluationAnswers {
+  ease_of_use: number;
+  participation_ease: number;
+  enjoyment: number;
+  data_security: number;
+  privacy_safety: number;
+  mental_effort: number;
+  overall_experience: string;
+}
+export interface SurveyEvaluation {
   _id: string;
   user_id: string;
-  session_id?: string;
-  answers: {
-    ease_of_use?: number;
-    participation_ease?: number;
-    enjoyment?: number;
-    data_security?: number;
-    privacy_safety?: number;
-    mental_effort?: number;
-    overall_experience?: string;
-  };
+  session_id: string;
+  answers: Partial<EvaluationAnswers>;
   completed: boolean;
-  created_at: string;
 }
 
 export interface EvaluationQuestion {

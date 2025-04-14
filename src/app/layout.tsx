@@ -3,6 +3,7 @@ import { Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/components/other/ThemeProvider";
+import { Toaster } from 'sonner';
 
 const nunitoSans = Nunito_Sans({
   variable: "--font-nunito",
@@ -31,6 +32,7 @@ export default function RootLayout({
         >
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );

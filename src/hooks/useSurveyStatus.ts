@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { SurveySessionStatus } from "@/services/survey/types";
 import { getUserData } from "@/services/auth";
-import { getSurveyStatus } from "@/services/survey/surveyStatus";
+import { getSurveySession } from "@/services/survey/surveyService";
+import { SurveySession } from "@/services/survey/types";
 
 interface SurveyStatus {
   isLoading: boolean;
   error: string | null;
-  sessionData: SurveySessionStatus | null;
+  sessionData: SurveySession | null;
 }
 
 export function useSurveyStatus(forceRefresh = false) {
@@ -45,10 +45,7 @@ export function useSurveyStatus(forceRefresh = false) {
 
         // Use try-catch but don't display AbortError
         try {
-          const surveySessionResponse = await getSurveyStatus(
-            userData.activeSurveySessionId,
-            controller.signal
-          );
+          const surveySessionResponse = await getSurveySession(userData.activeSurveySessionId)
 
           // Only update if still mounted
           if (isMounted.current) {
