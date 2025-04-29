@@ -9,7 +9,7 @@ const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
     <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-4 md:p-6`}>
       <div className={`flex flex-col justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-4 md:p-6 rounded-md shadow-sm ${darkMode ? 'text-gray-300' : 'text-[#565656]'} text-justify`}>
         <h2 className={`mb-4 text-base md:text-lg font-medium`}>
-          Hai, yuk ikut berpartisipasi dalam Survei Wisatawan Nusantara 2024 yang diselenggarakan oleh Badan Pusat Statistik (BPS). Anda hanya perlu meluangkan waktu sekitar 10 (sepuluh) menit untuk mengisi survei ini.
+          Hai, yuk ikut berpartisipasi dalam Survei Wisatawan Nusantara 2025 yang diselenggarakan oleh Badan Pusat Statistik (BPS). Anda hanya perlu meluangkan waktu sekitar 10 (sepuluh) menit untuk mengisi survei ini.
         </h2>
 
         <p className={`mb-6 font-bold text-base md:text-lg`}>
@@ -48,7 +48,7 @@ const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
 
       <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-5 rounded-md shadow-sm my-6 ${darkMode ? 'text-gray-300' : 'text-[#565656]'} text-justify`}>
         <h3 className={`text-center font-semibold mb-3 text-lg`}>Persetujuan Penggunaan Data Pribadi</h3>
-        <h4 className={`mb-4 text-base`}>Dari Responden Survei Wisatawan Nusantara 2024</h4>
+        <h4 className={`mb-4 text-base`}>Dari Responden Survei Wisatawan Nusantara 2025</h4>
 
         <p className={`mb-4 text-base`}>
           Dengan penuh kesadaran dan tanpa paksaan, bersedia secara sukarela untuk memberikan informasi dan data pribadi saya yang meliputi:
@@ -57,7 +57,7 @@ const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
         <ol className="list-decimal pl-6 mb-6 space-y-2 text-base">
           <li>Nomor telepon</li>
           <li>Kode Provinsi dan Kabupaten/Kota asal, Kode Provinsi dan Kabupaten/Kota tujuan perjalanan (Untuk selanjutnya disebut &quot;Kode Lokasi&quot;)</li>
-          <li>Data terkait perjalanan pada periode Januari-Maret 2024</li>
+          <li>Data terkait perjalanan pada periode Januari-Maret 2025</li>
         </ol>
       </div>
     </div>

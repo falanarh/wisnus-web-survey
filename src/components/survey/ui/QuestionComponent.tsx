@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { Question as QuestionType } from "@/service/types/Question";
 import CustomRadioGroup from "./CustomRadioButton";
 import CustomTextInput from "./CustomTextInput";
@@ -7,6 +7,7 @@ import MultiSelectDropdown from "./MultiSelectDropdown";
 import { useSurvey } from "@/context/SurveyContext";
 import { getCurrentMonthYear, replacePlaceholders } from "@/utils/functions";
 import CustomDropdown from "./CustomDropdown";
+import CustomRadioButton from "./CustomRadioButton"; // pastikan path sesuai
 
 const ADDITIONAL_INFO_CODES = [
   "KR004",
@@ -23,6 +24,25 @@ const ADDITIONAL_INFO_CODES = [
 ];
 const PROVINCE_QUESTION_CODES = ["S002", "S004"];
 const REGENCY_QUESTION_CODES = ["S003", "S005"];
+const EXPENSE_QUESTION_CODES = [
+  "S009",
+  "S013",
+  "S014",
+  "S017",
+  "S019",
+  "S020",
+  "S021",
+  "S022",
+  "S023",
+  "S024",
+  "S025",
+  "S026",
+  "S027",
+  "S028",
+  "S029",
+]; // sesuaikan
+
+const DEBOUNCE_DELAY = 700; // ms
 
 interface QuestionProps {
   question: QuestionType;
@@ -30,7 +50,9 @@ interface QuestionProps {
 }
 
 const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
-  const { answers, updateAnswer } = useSurvey();
+  const { answers, updateAnswer, errors } = useSurvey();
+  const [localValue, setLocalValue] = useState(answers[question.code] || "");
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [loading] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -44,6 +66,43 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     instruction,
     multiple,
   } = question;
+
+  const isExpenseQuestion = EXPENSE_QUESTION_CODES.includes(question.code);
+  const isTidakTahu = (answers[question.code] || "") === "Tidak tahu";
+  // const isTextFilled = answers[question.code] && answers[question.code] !== "Tidak tahu";
+
+  // Untuk input teks pengeluaran: debounce submit
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalValue(val);
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    debounceTimer.current = setTimeout(() => {
+      // Hanya submit jika value berubah dari state global
+      if (val !== answers[question.code]) {
+        updateAnswer(question.code, val);
+      }
+    }, DEBOUNCE_DELAY);
+  };
+
+  // Untuk radio "Tidak tahu": submit langsung, kosongkan input lokal
+  const handleTidakTahu = () => {
+    setLocalValue(""); // kosongkan input lokal
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    updateAnswer(question.code, "Tidak tahu");
+  };
+
+  // Sinkronkan localValue jika jawaban global berubah (misal reset)
+  React.useEffect(() => {
+    setLocalValue(answers[question.code] || "");
+  }, [answers[question.code]]);
+
+  // const value = answers[question.code] || "";
+
+  // const handleRadioChange = () => {
+  //   updateAnswer(question.code, "Tidak tahu");
+  // };
 
   // Filter options for S006 (bulan) to only include months up to the current month
   const filteredOptions = useMemo(() => {
@@ -119,7 +178,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
       await updateAnswer(question.code, newValue);
     } catch (error) {
       // Only show submit error if it's not a validation error
-      if (error instanceof Error && !error.message.includes('validation')) {
+      if (error instanceof Error && !error.message.includes("validation")) {
         setSubmitError(error.message);
       }
     }
@@ -274,7 +333,109 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     currentMonth: getCurrentMonthYear(),
   };
 
-  return (
+  return isExpenseQuestion ? (
+    <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+      <label className="font-semibold w-full md:w-1/3 dark:text-gray-300">
+        <span
+          className={`font-bold ${
+            darkMode ? "text-gray-200" : "text-[#565656]"
+          }`}
+        >
+          {replacePlaceholders(text, replacement)}
+        </span>
+
+        {additional_info && (
+          <>
+            {!ADDITIONAL_INFO_CODES.includes(code) && (
+              <span
+                className={`text-sm font-semibold ml-[5px] ${
+                  darkMode ? "text-gray-400" : "text-[#565656]"
+                } my-2`}
+              >
+                {"(" + additional_info + ")"}
+                {validation.required && (
+                  <span className="text-red-500 ml-[5px]">*</span>
+                )}
+              </span>
+            )}
+            {ADDITIONAL_INFO_CODES.includes(code) && renderAdditionalInfo()}
+          </>
+        )}
+
+        {!additional_info && validation.required && (
+          <span className="text-red-500 ml-[5px]">*</span>
+        )}
+
+        {instruction && (
+          <div
+            className={`mt-1 text-xs italic ${
+              darkMode ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            {instruction}
+          </div>
+        )}
+
+        {code === "S006" && (
+          <div
+            className={`mt-1 text-xs italic ${
+              darkMode ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            *Hanya menampilkan bulan hingga saat ini
+          </div>
+        )}
+      </label>
+      <div className="flex-1">
+        { question.type === "text" && (<CustomTextInput
+          name={question.code}
+          type="number"
+          placeholder={
+            question.code === "S009"
+              ? "Masukkan jumlah malam"
+              : "Masukkan nominal (Rp)"
+          }
+          darkMode={darkMode}
+          value={isTidakTahu ? "" : localValue}
+          onChange={handleTextChange}
+          min={question.validation?.min}
+          max={question.validation?.max}
+          required={question.validation?.required}
+        />)}
+
+        {question.type === "select" && multiple && filteredOptions && (
+          <MultiSelectDropdown
+            name={code}
+            options={
+              Array.isArray(filteredOptions)
+                ? filteredOptions.map((opt) =>
+                    typeof opt === "string" ? opt : opt.text
+                  )
+                : []
+            }
+            // value={answers[code] || ""}
+            value={isTidakTahu ? "" : localValue}
+            onChange={handleChange}
+            darkMode={darkMode}
+            placeholder={getPlaceholder()}
+          />
+        )}
+        {errors[question.code] && (
+          <div className="text-red-500 text-sm mt-2">
+            {errors[question.code]}
+          </div>
+        )}
+        <CustomRadioButton
+          name={question.code}
+          options={["Tidak tahu"]}
+          selected={isTidakTahu ? "Tidak tahu" : ""}
+          onChange={handleTidakTahu}
+          multiple={false}
+          darkMode={darkMode}
+        />
+      </div>
+    </div>
+  ) : (
     <div className="flex flex-col md:flex-row gap-4 md:gap-8">
       {/* Question Section */}
       <div className="w-full md:w-1/3 dark:text-gray-300">
@@ -364,15 +525,11 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
         )}
 
         {submitError && (
-          <div className="text-red-500 text-sm mt-2">
-            {submitError}
-          </div>
+          <div className="text-red-500 text-sm mt-2">{submitError}</div>
         )}
 
         {loading && (
-          <div className="text-blue-500 text-sm mt-2">
-            Menyimpan...
-          </div>
+          <div className="text-blue-500 text-sm mt-2">Menyimpan...</div>
         )}
 
         {/* {error && (

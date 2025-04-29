@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Sidebar Header */}
         <div className="p-8 pb-4">
-          <p className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-600'}`}>WISNUS 2024</p>
+          <p className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-600'}`}>WISNUS 2025</p>
         </div>
 
         {/* Sidebar Navigation */}

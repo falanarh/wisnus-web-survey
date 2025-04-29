@@ -12,6 +12,7 @@ interface CustomTextInputProps {
   max?: number;
   pattern?: string;
   required?: boolean;
+  disabled?: boolean; // <-- Tambahkan ini
 }
 
 const CustomTextInput: React.FC<CustomTextInputProps> = ({
@@ -25,6 +26,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   max,
   pattern,
   required,
+  disabled, // <-- Tambahkan ini
 }) => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isTouched, setIsTouched] = useState(false);
@@ -121,6 +123,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
           min={min}
           max={max}
           required={required}
+          disabled={disabled} // <-- Tambahkan ini
         />
       </div>
       

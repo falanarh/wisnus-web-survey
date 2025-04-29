@@ -13,7 +13,7 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Survei Wisatawan Nusantara 2024",
+  title: "Survei Wisatawan Nusantara 2025",
   description: "Survei Digital Wisatawan Nusantara oleh BPS RI",
 };
 

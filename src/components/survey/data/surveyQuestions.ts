@@ -6,7 +6,7 @@ export const surveyQuestions: Question[] = [
     text: "Nomor handphone",
     type: "text",
     validation: {
-      required: true,
+      required: false,
       pattern: "/^(0[0-9]{7,14}|\+62[0-9]{7,12})$/",
     },
   },
@@ -17,7 +17,7 @@ export const surveyQuestions: Question[] = [
     multiple: false,
     options: [],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -27,7 +27,7 @@ export const surveyQuestions: Question[] = [
     multiple: false,
     options: [],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -37,7 +37,7 @@ export const surveyQuestions: Question[] = [
     multiple: false,
     options: [],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -47,7 +47,7 @@ export const surveyQuestions: Question[] = [
     multiple: false,
     options: [],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -71,7 +71,7 @@ export const surveyQuestions: Question[] = [
       "Desember 2025",
     ],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -81,7 +81,7 @@ export const surveyQuestions: Question[] = [
     multiple: false,
     options: [],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -89,9 +89,9 @@ export const surveyQuestions: Question[] = [
     text: "Pada perjalanan ke {$kabkot} pada Bulan {$bulan}, apakah Anda melakukan perjalanan Pulang-Pergi di hari yang sama?",
     type: "select",
     multiple: false,
-    options: ["Ya", "Tidak"],
+    options: ["Ya", "Tidak", "Tidak tahu"],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -102,7 +102,7 @@ export const surveyQuestions: Question[] = [
     additional_info:
       "Ket: Dihitung sejak Anda meninggalkan rumah sampai kembali lagi ke rumah. Pertambahan malam ditandai dengan pergantian tanggal.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -121,9 +121,12 @@ export const surveyQuestions: Question[] = [
         additional_info:
           "Misalnya: menemani orang tua berobat, mengantar anak kejuaraan, dll.",
       },
+      {
+        text: "Tidak tahu",
+      },
     ],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -145,12 +148,13 @@ export const surveyQuestions: Question[] = [
       "Olahraga",
       "Kesenian",
       "Belanja/Shopping",
+      "Tidak tahu",
     ],
     additional_info:
       "Maksud atau tujuan utama melakukan perjalanan adalah motif atau tujuan utama atau yang menjadi sebab utama seseorang melakukan perjalanan.",
     allow_other: true,
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -158,9 +162,9 @@ export const surveyQuestions: Question[] = [
     text: "Apakah dalam perjalanan ke {$kabkot} pada Bulan {$bulan} membeli paket perjalanan/liburan/tour?",
     type: "select",
     multiple: false,
-    options: ["Ya", "Tidak"],
+    options: ["Ya", "Tidak", "Tidak tahu"],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -178,7 +182,7 @@ export const surveyQuestions: Question[] = [
       "Lainnya",
     ],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -187,7 +191,7 @@ export const surveyQuestions: Question[] = [
     type: "text",
     unit: "Rupiah",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -202,11 +206,12 @@ export const surveyQuestions: Question[] = [
       "Hotel Bintang 3",
       "Penginapan lainnya",
       "Rumah teman/keluarga",
+      "Tidak tahu",
     ],
     additional_info:
       "Ket: Bermalam di kendaraan selama dalam perjalanan seperti di mobil, kapal, kereta api, dan sejenisnya, tidak dianggap menggunakan akomodasi.",
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -246,9 +251,12 @@ export const surveyQuestions: Question[] = [
         additional_info:
           "Misalnya sewa motor atau sewa mobil tidak termasuk sopir",
       },
+      {
+        text: "Tidak tahu"
+      }
     ],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -273,7 +281,7 @@ export const surveyQuestions: Question[] = [
       "Tidak melakukan satu pun kegiatan di atas",
     ],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -283,7 +291,7 @@ export const surveyQuestions: Question[] = [
     multiple: false,
     options: ["Ya", "Tidak", "Belum Tahu"],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -294,7 +302,7 @@ export const surveyQuestions: Question[] = [
     instruction:
       "Wajib diisi. Jika tidak ada pengeluaran, isikan 0. Jika tidak tahu, mohon perkirakan.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -306,7 +314,7 @@ export const surveyQuestions: Question[] = [
     unit: "Rp",
     instruction: "Wajib diisi.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -320,7 +328,7 @@ export const surveyQuestions: Question[] = [
       "Ket: Total pengeluaran untuk transportasi selama perjalanan. Jika menggunakan angkutan pribadi, isikan pengeluaran pembelian BBM dan biaya tol.",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -332,7 +340,7 @@ export const surveyQuestions: Question[] = [
     unit: "Rp",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -346,7 +354,7 @@ export const surveyQuestions: Question[] = [
       "Ket: Termasuk belanja untuk keperluan pribadi selama perjalanan, seperti sabun, pasta gigi, sikat gigi, tisu, dsb",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -360,7 +368,7 @@ export const surveyQuestions: Question[] = [
       "Ket: Tiket masuk objek wisata atau atraksi, seperti museum, taman, kebun binatang, candi, pendakian gunung, tari-tarian, konser, pertunjukkan, diving, dll",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -372,7 +380,7 @@ export const surveyQuestions: Question[] = [
     unit: "Rp",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -384,7 +392,7 @@ export const surveyQuestions: Question[] = [
     unit: "Rp",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -396,7 +404,7 @@ export const surveyQuestions: Question[] = [
     unit: "Rp",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -410,7 +418,7 @@ export const surveyQuestions: Question[] = [
       "Misalnya: pembelian pakaian dan makanan untuk keberangkatan wisata, buah tangan untuk teman/keluarga di daerah tujuan, stok obat, perawatan kendaraan sebelum perjalanan, dll.",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },
@@ -424,7 +432,7 @@ export const surveyQuestions: Question[] = [
       "Misalnya: laundry pakaian pada saat pulang, perawatan kendaraan setelah perjalanan, dll.",
     instruction: "Wajib diisi. Jika tidak ada pengeluaran, isikan 0.",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
     },

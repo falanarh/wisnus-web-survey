@@ -39,7 +39,7 @@ const Header: React.FC<HeaderProps> = ({
       )}
 
       <h1 className={`text-lg md:text-2xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-600'} ml-3 md:ml-0`}>
-        SURVEI WISATAWAN NUSANTARA 2024
+        SURVEI WISATAWAN NUSANTARA 2025
       </h1>
 
       {/* Dark Mode Toggle */}
