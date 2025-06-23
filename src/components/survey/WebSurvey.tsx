@@ -9,7 +9,7 @@ import SurveyStartPopup from './layout/SurveyStartPopup';
 import { SurveyProvider } from '@/context/SurveyContext';
 import { useTheme } from '@/components/other/ThemeProvider';
 import SurveyLayout from './layout/SurveyLayout';
-import { startSurveySession } from '@/services/survey/surveyService';
+import { startSurveySession, submitSurveyResponse } from '@/services/survey/surveyService';
 import { getUserData, updateUserProperty } from '@/services/auth';
 
 const WebSurvey = () => {
@@ -55,12 +55,20 @@ const WebSurvey = () => {
         setSessionStarted(true);
         localStorage.setItem('surveySessionStarted', 'true');
         updateUserProperty('activeSurveySessionId', response.data._id);
-        
+
+        // Submit kode unik ke sesi survei baru
+        const uniqueCode = localStorage.getItem('uniqueSurveyCode');
+        if (uniqueCode) {
+          await submitSurveyResponse(response.data._id, {
+            question_code: 'UCODE',
+            valid_response: uniqueCode,
+          });
+        }
+
         // Close popup and switch to survey tab
         setShowStartPopup(false);
         setActiveTab('survei');
         localStorage.setItem('surveyActiveTab', 'survei');
-        
         toast.success('Sesi survei berhasil dimulai');
       } else {
         throw new Error(response.message || 'Gagal memulai sesi survei');

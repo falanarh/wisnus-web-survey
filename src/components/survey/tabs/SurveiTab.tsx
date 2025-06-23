@@ -3,7 +3,6 @@ import { surveyQuestions } from '../data/surveyQuestions';
 import QuestionComponent from '../ui/QuestionComponent';
 import { useSurvey } from '@/context/SurveyContext';
 
-
 interface SurveiTabProps {
   darkMode: boolean;
 }

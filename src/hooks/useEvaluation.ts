@@ -48,22 +48,23 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
 
         if (!isMounted) return;
 
-        // If evaluation exists and is not completed
+        // === PERBAIKAN DI SINI ===
         if (
           evaluationResponse.success &&
-          evaluationResponse.data &&
-          !evaluationResponse.data.completed
+          evaluationResponse.data
         ) {
-          const existingEvaluation = evaluationResponse.data;
-          setEvaluation(existingEvaluation);
+          setEvaluation(evaluationResponse.data);
 
-          // Calculate completed questions count
-          const completedCount = Object.keys(
-            existingEvaluation.answers || {}
-          ).length;
-          setCurrentQuestionIndex(
-            Math.min(completedCount, evaluationQuestions.length - 1)
-          );
+          if (evaluationResponse.data.completed) {
+            setIsComplete(true);
+          } else {
+            const completedCount = Object.keys(
+              evaluationResponse.data.answers || {}
+            ).length;
+            setCurrentQuestionIndex(
+              Math.min(completedCount, evaluationQuestions.length - 1)
+            );
+          }
           return;
         }
 
@@ -95,22 +96,6 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
       } catch (err) {
         if (!isMounted) return;
 
-        if (
-          err instanceof Error &&
-          err.message === "Survey evaluation not found for this session"
-        ) {
-          const newEvaluationResponse = await createSurveyEvaluation(sessionId);
-
-          if (!isMounted) return;
-
-          if (newEvaluationResponse.success && newEvaluationResponse.data) {
-            setEvaluation(newEvaluationResponse.data);
-            setCurrentQuestionIndex(0);
-            return;
-          }
-        }
-
-        console.error("Error in evaluation flow:", err);
         setError(
           err instanceof Error ? err.message : "Failed to load evaluation"
         );

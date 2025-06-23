@@ -1,14 +1,18 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import { useSurvey } from '@/context/SurveyContext';
 import { surveyQuestions } from '../data/surveyQuestions';
 import { characteristicQuestions } from '../data/characteristicQuestions';
+import { completeSurveySession } from "@/services/survey/surveyService";
+import { useRouter } from "next/navigation"; // atau "next/navigation" jika pakai app router
 
 interface SidebarStatsProps {
   darkMode: boolean;
 }
 
 const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
-  const { answers, errors } = useSurvey();
+  const { answers, errors, sessionId } = useSurvey(); // pastikan sessionId tersedia di context
   const [stats, setStats] = useState({
     answered: 0,
     blank: 0,
@@ -16,6 +20,7 @@ const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
     remark: 0,
     total: 0
   });
+  const router = useRouter();
 
   useEffect(() => {
     // Calculate total questions from both survey and characteristic questions
@@ -43,25 +48,22 @@ const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
     });
   }, [answers, errors]);
 
-  const handleSubmit = () => {
-    // No need to check for errors here as the button will be disabled
-    
-    // Check if all required questions are answered
-    const allQuestions = [...surveyQuestions, ...characteristicQuestions];
-    const requiredQuestions = allQuestions.filter(q => q.validation.required);
-    
-    const unansweredRequired = requiredQuestions.filter(q => 
-      !answers[q.code] || answers[q.code].trim() === ''
-    );
-    
-    if (unansweredRequired.length > 0) {
-      alert(`Mohon lengkapi ${unansweredRequired.length} bidang wajib yang belum diisi.`);
-      return;
+  const handleSubmit = async () => {
+    try {
+      if (!sessionId) {
+        alert("Session tidak ditemukan");
+        return;
+      }
+      await completeSurveySession(sessionId);
+      // Redirect ke halaman selesai, misal "/survey/completed"
+      router.push("/survey/completed");
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Gagal mengakhiri sesi survei. Silakan coba lagi."
+      );
     }
-    
-    // If all validations pass, proceed with submission
-    console.log('Survey submitted with answers:', answers);
-    alert('Survey submitted successfully!');
   };
 
   // Determine if submit button should be disabled

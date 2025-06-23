@@ -24,7 +24,7 @@ const ADDITIONAL_INFO_CODES = [
 ];
 const PROVINCE_QUESTION_CODES = ["S002", "S004"];
 const REGENCY_QUESTION_CODES = ["S003", "S005"];
-const EXPENSE_QUESTION_CODES = [
+const FLEXIBLE_QUESTION_CODES = [
   "S009",
   "S013",
   "S014",
@@ -67,7 +67,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     multiple,
   } = question;
 
-  const isExpenseQuestion = EXPENSE_QUESTION_CODES.includes(question.code);
+  const isFLEXIBLEQuestion = FLEXIBLE_QUESTION_CODES.includes(question.code);
   const isTidakTahu = (answers[question.code] || "") === "Tidak tahu";
   // const isTextFilled = answers[question.code] && answers[question.code] !== "Tidak tahu";
 
@@ -333,7 +333,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     currentMonth: getCurrentMonthYear(),
   };
 
-  return isExpenseQuestion ? (
+  return isFLEXIBLEQuestion ? (
     <div className="flex flex-col md:flex-row gap-4 md:gap-8">
       <label className="font-semibold w-full md:w-1/3 dark:text-gray-300">
         <span

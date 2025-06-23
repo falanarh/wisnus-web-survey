@@ -79,7 +79,9 @@ export const submitSurveyResponse = async (
   }
 };
 
-export const getSurveySession = async (sessionId: string): Promise<ApiResponse<SurveySession>> => {
+export const getSurveySession = async (
+  sessionId: string
+): Promise<ApiResponse<SurveySession>> => {
   try {
     const token = getToken();
     if (!token) {
@@ -108,7 +110,54 @@ export const getSurveySession = async (sessionId: string): Promise<ApiResponse<S
     console.error("Error fetching survey session:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Failed to fetch survey session",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch survey session",
+    };
+  }
+};
+
+export const completeSurveySession = async (sessionId: string) => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/survey-sessions/${sessionId}/complete`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  const data = await response.json();
+  if (!response.ok)
+    throw new Error(data.message || "Failed to complete session");
+  return data;
+};
+
+export const validateUniqueSurveyCode = async (kodeUnik: string) => {
+  try {
+    const token = getToken();
+    if (!token) throw new Error('No authentication token found');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/unique-survey-codes/unique-code/${kodeUnik}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to validate code',
     };
   }
 };

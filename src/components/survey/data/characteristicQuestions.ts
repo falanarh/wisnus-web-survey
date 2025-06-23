@@ -7,7 +7,7 @@ export const characteristicQuestions: Question[] = [
     type: "select",
     options: ["Laki-laki", "Perempuan"],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -17,7 +17,7 @@ export const characteristicQuestions: Question[] = [
     unit: "tahun",
     additional_info: "Berdasarkan ulang tahun terakhir",
     validation: {
-      required: true,
+      required: false,
       input_type: "number",
       min: 0,
       max: 120,
@@ -38,7 +38,7 @@ export const characteristicQuestions: Question[] = [
       "S2/S3",
     ],
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -63,7 +63,7 @@ export const characteristicQuestions: Question[] = [
     additional_info:
       "Contoh kasus untuk ASN: \nManajer, yaitu Deputi, Direktur, Gubernur, Walikota, Bupati, Menteri. \nProfesional, yaitu Dosen, Guru, Statistisi. \nTeknisi, yaitu Pengawas perbatasan, Petugas imigrasi, Petugas bea cukai.",
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -73,7 +73,7 @@ export const characteristicQuestions: Question[] = [
     additional_info:
       "Contoh: \nMengajar anak SD. \nSekretaris di Kantor kecamatan.",
     validation: {
-      required: true,
+      required: false,
     },
   },
   {
@@ -85,7 +85,7 @@ export const characteristicQuestions: Question[] = [
     additional_info:
       "Misalnya: Mengurangi penggunaan plastik, bijak menggunakan energi, membuang sampah pada tempatnya, dll.",
     validation: {
-      required: true,
+      required: false,
     },
   },
 ];

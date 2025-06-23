@@ -64,7 +64,12 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
         // Pattern validation
         if (pattern && value.trim()) {
           try {
-            const regex = new RegExp(pattern);
+            // Perbaikan: hapus '/' di awal/akhir jika ada
+            let cleanPattern = pattern;
+            if (cleanPattern.startsWith("/") && cleanPattern.endsWith("/")) {
+              cleanPattern = cleanPattern.slice(1, -1);
+            }
+            const regex = new RegExp(cleanPattern);
             if (!regex.test(value)) {
               const errorMsg = 'Nilai tidak sesuai format yang diharapkan';
               setLocalError(errorMsg);
