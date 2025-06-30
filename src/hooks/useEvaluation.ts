@@ -134,7 +134,7 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
 
   // Submit answer to current question
   const submitQuestionAnswer = useCallback(
-    async (questionId: keyof EvaluationAnswers, value: number | string) => {
+    async (questionId: string, value: number | string) => {
       if (!evaluation?._id) {
         setError("No active evaluation found");
         return;
