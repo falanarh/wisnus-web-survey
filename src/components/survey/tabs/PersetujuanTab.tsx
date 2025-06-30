@@ -12,9 +12,9 @@ const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
           Hai, yuk ikut berpartisipasi dalam Survei Wisatawan Nusantara 2025 yang diselenggarakan oleh Badan Pusat Statistik (BPS). Anda hanya perlu meluangkan waktu sekitar 10 (sepuluh) menit untuk mengisi survei ini.
         </h2>
 
-        <p className={`mb-6 font-bold text-base md:text-lg`}>
+        {/* <p className={`mb-6 font-bold text-base md:text-lg`}>
           Ayo segera isi dengan lengkap dan submit survei ini. Jadilah bagian dari responden yang BERUNTUNG dan dapatkan rewards sesuai pilihan Anda.
-        </p>
+        </p> */}
 
         <p className={`mb-6 text-base`}>
           Dengan mengikuti survei ini, Anda memberikan persetujuan kepada BPS untuk menyimpan dan menganalisis jawaban atas pertanyaan survei. Mohon kerja samanya untuk menjawab pertanyaan berikut secara benar.
