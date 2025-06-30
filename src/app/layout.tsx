@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={nunitoSans.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           disableTransitionOnChange
         >
           <AuthProvider>{children}</AuthProvider>

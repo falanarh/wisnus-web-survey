@@ -17,7 +17,7 @@ interface ThemeContextType {
 }
 
 const initialState: ThemeContextType = {
-  theme: "dark", // Changed default to dark
+  theme: "light", // Changed default to light
   setTheme: () => null,
 };
 
@@ -25,7 +25,7 @@ const ThemeContext = createContext<ThemeContextType>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark", // Changed default to dark
+  defaultTheme = "light", // Changed default to light
   disableTransitionOnChange = false,
   attribute = "class",
 }: ThemeProviderProps) {
@@ -70,9 +70,9 @@ export function ThemeProvider({
 
   // Initialize
   useEffect(() => {
-    // Apply dark theme immediately to avoid flash of light theme
+    // Apply light theme immediately to avoid flash of dark theme
     if (!mounted) {
-      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("dark");
     }
     
     setMounted(true);
@@ -82,9 +82,9 @@ export function ThemeProvider({
     if (savedTheme && (savedTheme === "light" || savedTheme === "dark")) {
       setTheme(savedTheme);
     } else {
-      // Explicitly set dark as default if nothing in localStorage
-      setTheme("dark");
-      localStorage.setItem("theme", "dark");
+      // Explicitly set light as default if nothing in localStorage
+      setTheme("light");
+      localStorage.setItem("theme", "light");
     }
   }, [mounted]);
 
