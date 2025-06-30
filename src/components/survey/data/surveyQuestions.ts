@@ -1,15 +1,18 @@
 import { Question } from "@/service/types/Question";
 
 export const surveyQuestions: Question[] = [
+  // Pertanyaan nomor telepon dikomentari sesuai permintaan, jangan hapus
+  /*
   {
     code: "S001",
     text: "Nomor handphone",
     type: "text",
     validation: {
       required: false,
-      pattern: "/^(0[0-9]{7,14}|\+62[0-9]{7,12})$/",
+      pattern: "/^(0[0-9]{7,14}|\\+62[0-9]{7,12})$/",
     },
   },
+  */
   {
     code: "S002",
     text: "Di provinsi manakah Anda tinggal?",
