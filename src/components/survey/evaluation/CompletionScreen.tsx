@@ -66,9 +66,17 @@ const CompletionScreen: React.FC = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-gray-600 dark:text-gray-300 mb-8"
+              className="text-gray-600 dark:text-gray-300 mb-2"
             >
               Evaluasi Anda telah berhasil dikirim.
+            </motion.p>
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              className="text-gray-700 dark:text-gray-400 mb-8 text-sm"
+            >
+              Anda telah berhasil menyelesaikan seluruh rangkaian survei. Terima kasih atas partisipasi Anda!
             </motion.p>
             <motion.button
               initial={{ y: 20, opacity: 0 }}
