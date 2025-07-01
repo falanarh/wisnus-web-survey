@@ -24,6 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" type="image/png" href="/bps_mini_icon2.png" />
+      </head>
       <body className={nunitoSans.className}>
         <ThemeProvider
           attribute="class"
