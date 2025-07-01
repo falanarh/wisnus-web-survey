@@ -86,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Survey Stats */}
-        <SidebarStats darkMode={darkMode} />
+        <SidebarStats />
       </div>
     </aside>
   );

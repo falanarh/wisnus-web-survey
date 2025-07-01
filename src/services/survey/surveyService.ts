@@ -161,3 +161,53 @@ export const validateUniqueSurveyCode = async (kodeUnik: string) => {
     };
   }
 };
+
+export const updateTimeConsumed = async (
+  sessionId: string,
+  data: { survei: number; karakteristik: number }
+): Promise<{ success: boolean; data?: unknown; message?: string }> => {
+  try {
+    console.log(`[API] updateTimeConsumed dipanggil dengan sessionId: ${sessionId}`);
+    console.log(`[API] Data yang akan dikirim:`, data);
+    
+    const token = getToken();
+    if (!token) {
+      console.error(`[API] Token tidak ditemukan`);
+      throw new Error("No authentication token found");
+    }
+    
+    console.log(`[API] Token ditemukan, akan mengirim request ke API...`);
+    
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/survey-sessions/${sessionId}/time-consumed`;
+    console.log(`[API] URL request: ${url}`);
+    
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    
+    console.log(`[API] Response status: ${response.status}`);
+    console.log(`[API] Response ok: ${response.ok}`);
+    
+    const resData = await response.json();
+    console.log(`[API] Response data:`, resData);
+    
+    if (!response.ok) {
+      console.error(`[API] Request gagal dengan status ${response.status}:`, resData.message);
+      throw new Error(resData.message || "Failed to update time consumed");
+    }
+    
+    console.log(`[API] Request berhasil`);
+    return { success: true, data: resData.data };
+  } catch (error) {
+    console.error(`[API] Error dalam updateTimeConsumed:`, error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to update time consumed",
+    };
+  }
+};

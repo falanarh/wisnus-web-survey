@@ -12,6 +12,11 @@ export interface Question {
   instruction?: string;
   allow_other?: boolean;
   layered_question?: Question[];
+  depends_on?: Array<{
+    code: string;
+    value?: string | string[];
+    value_not?: string | string[];
+  }>;
   validation: {
     required: boolean;
     input_type?: string;

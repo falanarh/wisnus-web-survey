@@ -2,60 +2,56 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSurvey } from '@/context/SurveyContext';
-import { surveyQuestions } from '../data/surveyQuestions';
-import { characteristicQuestions } from '../data/characteristicQuestions';
 import { completeSurveySession } from "@/services/survey/surveyService";
-import { useRouter } from "next/navigation"; // atau "next/navigation" jika pakai app router
+import { useRouter } from "next/navigation";
+import { getUserData } from '@/services/auth';
+import ModalKonfirmasiSubmit from './ModalKonfirmasiSubmit';
 
-interface SidebarStatsProps {
-  darkMode: boolean;
-}
-
-const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
-  const { answers, errors, sessionId } = useSurvey(); // pastikan sessionId tersedia di context
+const SidebarStats: React.FC = () => {
+  const { answers, errors, sessionId, activeQuestions, isLoading } = useSurvey();
   const [stats, setStats] = useState({
     answered: 0,
     blank: 0,
     error: 0,
-    remark: 0,
     total: 0
   });
   const router = useRouter();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    // Calculate total questions from both survey and characteristic questions
-    const allQuestions = [...surveyQuestions, ...characteristicQuestions];
-    const totalQuestions = allQuestions.length;
+    if (!activeQuestions) return;
+
+    const totalQuestions = activeQuestions.length;
     
-    // Count answered questions
-    const answeredCount = Object.values(answers).filter(value => 
-      value && value.trim() !== ''
-    ).length;
+    const answeredCount = activeQuestions.filter(q => {
+      const answer = answers[q.code];
+      return answer !== undefined && answer !== null && String(answer).trim() !== '';
+    }).length;
     
-    // Count questions with errors
-    const errorCount = Object.keys(errors).length;
+    const errorCount = activeQuestions.filter(q => !!errors[q.code]).length;
     
-    // Calculate blank questions (total minus answered)
-    const blankCount = totalQuestions - answeredCount;
+    const blankCount = Math.max(0, totalQuestions - answeredCount);
     
-    // Update stats
     setStats({
       answered: answeredCount,
       blank: blankCount,
       error: errorCount,
-      remark: 0, // Not currently tracking remarks, so keeping at 0
       total: totalQuestions
     });
-  }, [answers, errors]);
+  }, [answers, errors, activeQuestions]);
 
   const handleSubmit = async () => {
     try {
-      if (!sessionId) {
+      let sid = sessionId;
+      if (!sid) {
+        const userData = getUserData();
+        sid = userData?.activeSurveySessionId || null;
+      }
+      if (!sid) {
         alert("Session tidak ditemukan");
         return;
       }
-      await completeSurveySession(sessionId);
-      // Redirect ke halaman selesai, misal "/survey/completed"
+      await completeSurveySession(sid);
       router.push("/survey/completed");
     } catch (err) {
       alert(
@@ -66,27 +62,30 @@ const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
     }
   };
 
-  // Determine if submit button should be disabled
   const isSubmitDisabled = stats.error > 0;
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500">Memuat sesi survei...</div>;
+  }
 
   return (
     <div className="mt-auto p-8">
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center">
-          <p className={`text-4xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{stats.answered}</p>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Answer</p>
+          <p className="text-4xl font-bold">{stats.answered}</p>
+          <p className="text-sm">Answer</p>
         </div>
         <div className="text-center">
-          <p className={`text-4xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{stats.blank}</p>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Blank</p>
+          <p className="text-4xl font-bold">{stats.blank}</p>
+          <p className="text-sm">Blank</p>
         </div>
         <div className="text-center">
-          <p className={`text-4xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{stats.error}</p>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Error</p>
+          <p className="text-4xl font-bold">{stats.error}</p>
+          <p className="text-sm">Error</p>
         </div>
         <div className="text-center">
-          <p className={`text-4xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{stats.remark}</p>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Remark</p>
+          <p className="text-4xl font-bold">{stats.total}</p>
+          <p className="text-sm">Total</p>
         </div>
       </div>
       <button 
@@ -95,7 +94,7 @@ const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
             ? 'bg-gray-400 cursor-not-allowed opacity-70' 
             : 'bg-teal-400 hover:bg-teal-500'
         } text-white`}
-        onClick={handleSubmit}
+        onClick={() => setShowConfirm(true)}
         disabled={isSubmitDisabled}
       >
         {isSubmitDisabled ? `Can't Submit (${stats.error} Error)` : 'Submit'}
@@ -103,9 +102,18 @@ const SidebarStats: React.FC<SidebarStatsProps> = ({ darkMode }) => {
       
       {isSubmitDisabled && (
         <p className="mt-2 text-xs text-center text-red-500">
-          Mohon perbaiki kesalahan pada formulir sebelum melanjutkan
+          Mohon perbaiki kesalahan sebelum melanjutkan
         </p>
       )}
+      <ModalKonfirmasiSubmit
+        open={showConfirm}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={async () => {
+          setShowConfirm(false);
+          await handleSubmit();
+        }}
+        sessionId={sessionId}
+      />
     </div>
   );
 };

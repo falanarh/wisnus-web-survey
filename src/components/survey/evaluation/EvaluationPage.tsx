@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import CompletionScreen from "./CompletionScreen";
 import QuestionHeader from "./QuestionHeader";
 import ProgressBar from "./ProgressBar";
@@ -14,7 +13,6 @@ import { useSurveyStatus } from "@/hooks/useSurveyStatus";
 import Loader from "@/components/other/Loader";
 
 const EvaluationPage: React.FC = () => {
-  const router = useRouter();
   // Get session ID from user data if available
   const userData = getUserData();
   const sessionId = userData?.activeSurveySessionId;
@@ -22,43 +20,6 @@ const EvaluationPage: React.FC = () => {
   // Use the survey status hook to check if survey is completed
   const { isLoading: isStatusLoading, sessionData } = useSurveyStatus(true);
   
-  // Redirect countdown state
-  const [countdown, setCountdown] = useState(10);
-  const [showRedirectPopup, setShowRedirectPopup] = useState(false);
-
-  // Check if survey is completed and setup redirect timer if needed
-  useEffect(() => {
-    if (!isStatusLoading) {
-      const shouldRedirect = !sessionData || sessionData.status !== "COMPLETED";
-      setShowRedirectPopup(shouldRedirect);
-      
-      let timer: NodeJS.Timeout;
-      if (shouldRedirect) {
-        timer = setInterval(() => {
-          setCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              // Move the navigation outside the state update function
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-      
-      return () => {
-        if (timer) clearInterval(timer);
-      };
-    }
-  }, [isStatusLoading, sessionData]);
-  
-  // Separate effect to handle the navigation
-  useEffect(() => {
-    if (countdown === 0 && showRedirectPopup) {
-      router.push("/survey");
-    }
-  }, [countdown, router, showRedirectPopup]);
-
   const {
     currentQuestion,
     currentQuestionIndex,
@@ -100,9 +61,34 @@ const EvaluationPage: React.FC = () => {
     }
   };
 
-  const handleRedirectNow = () => {
-    router.push("/survey");
-  };
+  if (!isStatusLoading && !sessionData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 mx-6 max-w-md w-full flex flex-col items-center">
+          <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-6 shadow-lg">
+            <svg className="w-12 h-12 text-blue-500 dark:text-blue-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">
+            Sesi Survei Belum Dibuat
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
+            Anda belum memulai sesi survei. Silakan mulai survei terlebih dahulu sebelum mengisi evaluasi.
+          </p>
+          <button
+            onClick={() => window.location.href = '/survey'}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
+          >
+            Mulai Survei Sekarang
+          </button>
+          <p className="mt-4 text-xs text-gray-400 dark:text-gray-500 text-center">
+            Jika Anda merasa ini adalah kesalahan, silakan hubungi admin.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isStatusLoading || isLoading) {
     return (
@@ -141,7 +127,7 @@ const EvaluationPage: React.FC = () => {
         <div className="fixed inset-0 flex items-center justify-center z-10">
           <div className="flex flex-col items-center">
             <Loader />
-            <p className="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat...</p>
+            {/* <p className="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat...</p> */}
           </div>
         </div>
       </div>
@@ -236,36 +222,6 @@ const EvaluationPage: React.FC = () => {
       </main>
 
       <Footer />
-
-      {/* Redirect Popup */}
-      {showRedirectPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-md mx-4 sm:mx-auto"
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Anda belum menyelesaikan survei Wisnus</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Anda harus menyelesaikan survei Wisantara Nusantara sebelum dapat mengakses halaman evaluasi. 
-                Anda akan dialihkan ke halaman survei dalam <span className="font-bold">{countdown}</span> detik.
-              </p>
-              <button 
-                onClick={handleRedirectNow}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-              >
-                Lanjutkan ke Survei Sekarang
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 };

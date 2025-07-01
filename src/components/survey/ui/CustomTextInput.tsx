@@ -3,7 +3,6 @@ import { useSurvey } from '@/context/SurveyContext';
 
 interface CustomTextInputProps {
   name: string;
-  type: string;
   placeholder?: string;
   darkMode: boolean;
   value: string;
@@ -12,12 +11,18 @@ interface CustomTextInputProps {
   max?: number;
   pattern?: string;
   required?: boolean;
-  disabled?: boolean; // <-- Tambahkan ini
+  disabled?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
+}
+
+function formatNumberWithDots(value: string): string {
+  if (!value) return "";
+  return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 const CustomTextInput: React.FC<CustomTextInputProps> = ({
   name,
-  type,
   placeholder,
   darkMode,
   value,
@@ -26,7 +31,9 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   max,
   pattern,
   required,
-  disabled, // <-- Tambahkan ini
+  disabled,
+  onFocus,
+  onBlur,
 }) => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [isTouched, setIsTouched] = useState(false);
@@ -96,9 +103,22 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
     return () => clearTimeout(timeoutId);
   }, [value, isTouched, name, pattern, required, updateError, clearError]);
 
-  const handleBlur = () => {
-    setIsTouched(true);
+  // Handler internal agar value yang dikirim ke parent tanpa titik
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Hapus titik sebelum kirim ke parent
+    const rawValue = e.target.value.replace(/\./g, "");
+    const syntheticEvent = {
+      ...e,
+      target: {
+        ...e.target,
+        value: rawValue,
+      },
+    } as React.ChangeEvent<HTMLInputElement>;
+    onChange(syntheticEvent);
   };
+
+  // Format value untuk tampilan
+  const displayValue = formatNumberWithDots(value);
 
   return (
     <div className="flex flex-col w-full">
@@ -107,10 +127,14 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
           ref={inputRef}
           id={name}
           name={name}
-          type={type}
-          value={value}
-          onChange={onChange}
-          onBlur={handleBlur}
+          type="text"
+          value={displayValue}
+          onChange={handleChange}
+          onFocus={onFocus}
+          onBlur={() => {
+            setIsTouched(true);
+            if (onBlur) onBlur();
+          }}
           className={`
             w-full 
             p-2 
@@ -128,7 +152,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
           min={min}
           max={max}
           required={required}
-          disabled={disabled} // <-- Tambahkan ini
+          disabled={disabled}
         />
       </div>
       

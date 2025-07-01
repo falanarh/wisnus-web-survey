@@ -38,7 +38,7 @@ const NavTabs: React.FC<NavTabsProps> = ({ activeTab, setActiveTab, tabs, darkMo
         </div>
 
         {/* Next button */}
-        {activeTab !== "karakteristik" && (
+        {activeTab !== "survei" && (
           <button
             className={`flex items-center justify-center h-8 w-8 md:h-10 md:w-10 ${tabs.findIndex(tab => tab.id === activeTab) === tabs.length - 1
               ? 'opacity-50 cursor-not-allowed'

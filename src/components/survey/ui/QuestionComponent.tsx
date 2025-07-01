@@ -42,19 +42,27 @@ const FLEXIBLE_QUESTION_CODES = [
   "S029",
 ]; // sesuaikan
 
-const DEBOUNCE_DELAY = 700; // ms
-
 interface QuestionProps {
   question: QuestionType;
   darkMode: boolean;
 }
 
+// Fungsi format angka ribuan
+function formatNumberWithDots(value: string): string {
+  if (!value) return "";
+  return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
-  const { answers, updateAnswer, errors } = useSurvey();
-  const [localValue, setLocalValue] = useState(answers[question.code] || "");
+  const { answers, updateAnswer, errors, updateError, clearError } = useSurvey();
+  const [rawValue, setRawValue] = useState(answers[question.code] || "");
+  const [displayValue, setDisplayValue] = useState(formatNumberWithDots(answers[question.code] || ""));
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const [loading] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const multiSelectDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const {
     code,
@@ -71,38 +79,175 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
   const isTidakTahu = (answers[question.code] || "") === "Tidak tahu";
   // const isTextFilled = answers[question.code] && answers[question.code] !== "Tidak tahu";
 
-  // Untuk input teks pengeluaran: debounce submit
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setLocalValue(val);
+  React.useEffect(() => {
+    if (isInputFocused || isEditing) return; // Jangan sinkronisasi jika user sedang mengetik atau perubahan sedang diproses
 
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    const isNumeric = question.type === 'text' && question.validation?.input_type === 'number';
+    const globalAnswer = answers[question.code] || "";
 
-    debounceTimer.current = setTimeout(() => {
-      // Hanya submit jika value berubah dari state global
-      if (val !== answers[question.code]) {
-        updateAnswer(question.code, val);
+    if (globalAnswer === "Tidak tahu") {
+      setRawValue("");
+      setDisplayValue("");
+    } else {
+      setRawValue(globalAnswer);
+      if (isNumeric) {
+        setDisplayValue(formatNumberWithDots(globalAnswer));
+      } else {
+        setDisplayValue(globalAnswer);
       }
-    }, DEBOUNCE_DELAY);
+    }
+  }, [answers[question.code], isInputFocused, isEditing, question.type, question.validation]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsEditing(true); // Kunci input
+    const isNumeric = question.validation?.input_type === 'number';
+    const inputValue = e.target.value;
+    setSubmitError(null);
+
+    if (isNumeric) {
+      const onlyDigits = inputValue.replace(/\D/g, "");
+      setRawValue(onlyDigits);
+      setDisplayValue(formatNumberWithDots(onlyDigits));
+
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(async () => {
+        if (onlyDigits === "") {
+          clearError(question.code);
+          if (answers[question.code] !== "") {
+            try {
+              await updateAnswer(question.code, "");
+            } catch (error: unknown) {
+              // Handle potential error on clearing
+              if (error instanceof Error) setSubmitError(error.message);
+            }
+          }
+          return;
+        }
+        
+        const value = parseInt(onlyDigits, 10);
+        const { min, max } = question.validation;
+        if (min !== undefined && value < min) {
+          updateError(question.code, `Nilai minimal adalah ${min}.`);
+          return;
+        }
+        if (max !== undefined && value > max) {
+          updateError(question.code, `Nilai maksimal adalah ${max}.`);
+          return;
+        }
+        
+        clearError(question.code);
+        const cleanedValue = value.toString();
+
+        if (cleanedValue !== answers[question.code]) {
+          setIsSaving(true);
+          try {
+            await updateAnswer(question.code, cleanedValue);
+            setRawValue(cleanedValue);
+            setDisplayValue(formatNumberWithDots(cleanedValue));
+          } catch (error: unknown) {
+            if (error instanceof Error) {
+              if (error.message.toLowerCase().includes('validation failed') || error.message.toLowerCase().includes('maximum value exceeded')) {
+                updateError(question.code, error.message);
+              } else {
+                setSubmitError(error.message || "Gagal menyimpan jawaban");
+              }
+            } else {
+              setSubmitError("Gagal menyimpan jawaban");
+            }
+          } finally {
+            setIsSaving(false);
+            setIsEditing(false); // Buka kunci
+          }
+        }
+      }, 4000);
+    } else { // Free text input
+      setRawValue(inputValue);
+      setDisplayValue(inputValue);
+
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(async () => {
+        if (inputValue !== answers[question.code]) {
+          setIsSaving(true);
+          try {
+            await updateAnswer(question.code, inputValue);
+          } catch (error: unknown) {
+            if (error instanceof Error) {
+              setSubmitError(error.message || "Gagal menyimpan jawaban");
+            } else {
+              setSubmitError("Gagal menyimpan jawaban");
+            }
+          } finally {
+            setIsSaving(false);
+            setIsEditing(false); // Buka kunci
+          }
+        }
+      }, 4000);
+    }
   };
 
   // Untuk radio "Tidak tahu": submit langsung, kosongkan input lokal
-  const handleTidakTahu = () => {
-    setLocalValue(""); // kosongkan input lokal
+  const handleTidakTahu = async () => {
+    setIsEditing(true); // Kunci input
+    setRawValue(""); // kosongkan input lokal
+    setDisplayValue(""); // kosongkan tampilan input
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    updateAnswer(question.code, "Tidak tahu");
+    setIsSaving(true);
+    setSubmitError(null);
+    try {
+      await updateAnswer(question.code, "Tidak tahu");
+    } catch (error: unknown) {
+      if (error instanceof Error) setSubmitError(error.message || "Gagal menyimpan jawaban");
+      else setSubmitError("Gagal menyimpan jawaban");
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false); // Buka kunci
+    }
   };
 
-  // Sinkronkan localValue jika jawaban global berubah (misal reset)
-  React.useEffect(() => {
-    setLocalValue(answers[question.code] || "");
-  }, [answers[question.code]]);
+  // Untuk pilihan (radio/checkbox/dropdown): submit langsung
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsEditing(true); // Kunci input
+    const newValue = e.target.value;
+    setSubmitError(null);
+    setIsSaving(true);
+    try {
+      await updateAnswer(question.code, newValue);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setSubmitError(error.message || "Gagal menyimpan jawaban");
+      } else {
+        setSubmitError("Gagal menyimpan jawaban");
+      }
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false); // Buka kunci
+    }
+  };
 
-  // const value = answers[question.code] || "";
+  // Handler debounce internal untuk multi-select
+  const handleMultiSelectDebounced = (value: string) => {
+    setIsEditing(true); // Kunci input
+    setRawValue(value);
+    setSubmitError(null);
+    if (multiSelectDebounceTimer.current) clearTimeout(multiSelectDebounceTimer.current);
+    multiSelectDebounceTimer.current = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        await updateAnswer(question.code, value);
+      } catch (error: unknown) {
+        if (error instanceof Error) setSubmitError(error.message || "Gagal menyimpan jawaban");
+        else setSubmitError("Gagal menyimpan jawaban");
+      } finally {
+        setIsSaving(false);
+        setIsEditing(false); // Buka kunci
+      }
+    }, 4000);
+  };
 
-  // const handleRadioChange = () => {
-  //   updateAnswer(question.code, "Tidak tahu");
-  // };
+  // Handler event untuk MultiSelectDropdown
+  const handleMultiSelectChangeEvent = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleMultiSelectDebounced(e.target.value);
+  };
 
   // Filter options for S006 (bulan) to only include months up to the current month
   const filteredOptions = useMemo(() => {
@@ -168,20 +313,6 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     if (code === "S003") return "S002";
     if (code === "S005") return "S004";
     return null;
-  };
-
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setSubmitError(null); // Clear previous submit error
-
-    try {
-      await updateAnswer(question.code, newValue);
-    } catch (error) {
-      // Only show submit error if it's not a validation error
-      if (error instanceof Error && !error.message.includes("validation")) {
-        setSubmitError(error.message);
-      }
-    }
   };
 
   const renderAdditionalInfo = () => {
@@ -284,8 +415,8 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
                 )
               : []
           }
-          value={answers[code] || ""}
-          onChange={handleChange}
+          value={isTidakTahu ? "" : rawValue}
+          onChange={handleMultiSelectChangeEvent}
           darkMode={darkMode}
           placeholder={getPlaceholder()}
         />
@@ -308,20 +439,37 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
 
     // For text input questions
     if (type === "text") {
-      return (
-        <CustomTextInput
-          name={code}
-          type={validation.input_type || "text"}
-          placeholder={`Masukkan ${text.toLowerCase()}`}
-          darkMode={darkMode}
-          value={answers[code] || ""}
-          onChange={handleChange}
-          min={validation.min}
-          max={validation.max}
-          pattern={validation.pattern}
-          required={validation.required}
-        />
-      );
+      // Jika input numerik, jangan kirim pattern agar format ribuan bisa tampil
+      const isNumeric = validation.input_type === "number";
+      if (isNumeric) {
+        return (
+          <CustomTextInput
+            name={code}
+            placeholder={`Masukkan ${text.toLowerCase()}`}
+            darkMode={darkMode}
+            value={displayValue}
+            onChange={handleTextChange}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
+            min={validation.min}
+            max={validation.max}
+            required={validation.required}
+          />
+        );
+      } else {
+        return (
+          <CustomTextInput
+            name={code}
+            placeholder={`Masukkan ${text.toLowerCase()}`}
+            darkMode={darkMode}
+            value={rawValue === undefined || rawValue === null ? "" : rawValue}
+            onChange={handleTextChange}
+            min={validation.min}
+            max={validation.max}
+            required={validation.required}
+          />
+        );
+      }
     }
 
     return null;
@@ -333,220 +481,182 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     currentMonth: getCurrentMonthYear(),
   };
 
-  return isFLEXIBLEQuestion ? (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-8">
-      <label className="font-semibold w-full md:w-1/3 dark:text-gray-300">
-        <span
-          className={`font-bold ${
-            darkMode ? "text-gray-200" : "text-[#565656]"
-          }`}
-        >
-          {replacePlaceholders(text, replacement)}
-        </span>
-
-        {additional_info && (
-          <>
-            {!ADDITIONAL_INFO_CODES.includes(code) && (
-              <span
-                className={`text-sm font-semibold ml-[5px] ${
-                  darkMode ? "text-gray-400" : "text-[#565656]"
-                } my-2`}
-              >
-                {"(" + additional_info + ")"}
-                {validation.required && (
-                  <span className="text-red-500 ml-[5px]">*</span>
-                )}
-              </span>
-            )}
-            {ADDITIONAL_INFO_CODES.includes(code) && renderAdditionalInfo()}
-          </>
-        )}
-
-        {!additional_info && validation.required && (
-          <span className="text-red-500 ml-[5px]">*</span>
-        )}
-
-        {instruction && (
-          <div
-            className={`mt-1 text-xs italic ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            {instruction}
-          </div>
-        )}
-
-        {code === "S006" && (
-          <div
-            className={`mt-1 text-xs italic ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            *Hanya menampilkan bulan hingga saat ini
-          </div>
-        )}
-      </label>
-      <div className="flex-1">
-        { question.type === "text" && (<CustomTextInput
-          name={question.code}
-          type="number"
-          placeholder={
-            question.code === "S009"
-              ? "Masukkan jumlah malam"
-              : "Masukkan nominal (Rp)"
-          }
-          darkMode={darkMode}
-          value={isTidakTahu ? "" : localValue}
-          onChange={handleTextChange}
-          min={question.validation?.min}
-          max={question.validation?.max}
-          required={question.validation?.required}
-        />)}
-
-        {question.type === "select" && multiple && filteredOptions && (
-          <MultiSelectDropdown
-            name={code}
-            options={
-              Array.isArray(filteredOptions)
-                ? filteredOptions.map((opt) =>
-                    typeof opt === "string" ? opt : opt.text
-                  )
-                : []
-            }
-            // value={answers[code] || ""}
-            value={isTidakTahu ? "" : localValue}
-            onChange={handleChange}
-            darkMode={darkMode}
-            placeholder={getPlaceholder()}
-          />
-        )}
-        {errors[question.code] && (
-          <div className="text-red-500 text-sm mt-2">
-            {errors[question.code]}
-          </div>
-        )}
-        <CustomRadioButton
-          name={question.code}
-          options={["Tidak tahu"]}
-          selected={isTidakTahu ? "Tidak tahu" : ""}
-          onChange={handleTidakTahu}
-          multiple={false}
-          darkMode={darkMode}
-        />
-      </div>
-    </div>
-  ) : (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-8">
-      {/* Question Section */}
-      <div className="w-full md:w-1/3 dark:text-gray-300">
-        <span
-          className={`font-bold ${
-            darkMode ? "text-gray-200" : "text-[#565656]"
-          }`}
-        >
-          {replacePlaceholders(text, replacement)}
-        </span>
-
-        {additional_info && (
-          <>
-            {!ADDITIONAL_INFO_CODES.includes(code) && (
-              <span
-                className={`text-sm font-semibold ml-[5px] ${
-                  darkMode ? "text-gray-400" : "text-[#565656]"
-                } my-2`}
-              >
-                {"(" + additional_info + ")"}
-                {validation.required && (
-                  <span className="text-red-500 ml-[5px]">*</span>
-                )}
-              </span>
-            )}
-            {ADDITIONAL_INFO_CODES.includes(code) && renderAdditionalInfo()}
-          </>
-        )}
-
-        {!additional_info && validation.required && (
-          <span className="text-red-500 ml-[5px]">*</span>
-        )}
-
-        {instruction && (
-          <div
-            className={`mt-1 text-xs italic ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            {instruction}
-          </div>
-        )}
-
-        {code === "S006" && (
-          <div
-            className={`mt-1 text-xs italic ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            *Hanya menampilkan bulan hingga saat ini
-          </div>
-        )}
-      </div>
-
-      {/* Answer Section */}
-      <div className="flex-1">
-        {loading && (
-          <div
-            className={`py-4 text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
-          >
-            <div className="flex items-center space-x-2">
-              <svg
-                className="animate-spin h-5 w-5 text-blue-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <span>Memuat data...</span>
-            </div>
-          </div>
-        )}
-
-        {submitError && (
-          <div className="text-red-500 text-sm mt-2">{submitError}</div>
-        )}
-
-        {loading && (
-          <div className="text-blue-500 text-sm mt-2">Menyimpan...</div>
-        )}
-
-        {/* {error && (
-          <div className="py-4 text-sm text-red-500">
-            Error: {error}
-            <button
-              className="ml-2 text-blue-500 underline"
-              onClick={() => window.location.reload()}
+  return (
+    <>
+      {submitError && <div className="text-red-500 text-sm mb-2">{submitError}</div>}
+      {isFLEXIBLEQuestion ? (
+        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+          <label className="font-semibold w-full md:w-1/3 dark:text-gray-300">
+            <span
+              className={`font-bold ${
+                darkMode ? "text-gray-200" : "text-[#565656]"
+              }`}
             >
-              Muat ulang
-            </button>
-          </div>
-        )} */}
+              {replacePlaceholders(text, replacement)}
+            </span>
 
-        {!loading && renderInput()}
-      </div>
-    </div>
+            {additional_info && (
+              <>
+                {!ADDITIONAL_INFO_CODES.includes(code) && (
+                  <span
+                    className={`text-sm font-semibold ml-[5px] ${
+                      darkMode ? "text-gray-400" : "text-[#565656]"
+                    } my-2`}
+                  >
+                    {"(" + additional_info + ")"}
+                    {validation.required && (
+                      <span className="text-red-500 ml-[5px]">*</span>
+                    )}
+                  </span>
+                )}
+                {ADDITIONAL_INFO_CODES.includes(code) && renderAdditionalInfo()}
+              </>
+            )}
+
+            {!additional_info && validation.required && (
+              <span className="text-red-500 ml-[5px]">*</span>
+            )}
+
+            {instruction && (
+              <div
+                className={`mt-1 text-xs italic ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                {instruction}
+              </div>
+            )}
+
+            {code === "S006" && (
+              <div
+                className={`mt-1 text-xs italic ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                *Hanya menampilkan bulan hingga saat ini
+              </div>
+            )}
+          </label>
+          <div className="flex-1">
+            { question.type === "text" && (<CustomTextInput
+              name={question.code}
+              placeholder={
+                question.code === "S009"
+                  ? "Masukkan jumlah malam"
+                  : "Masukkan nominal (Rp)"
+              }
+              darkMode={darkMode}
+              value={displayValue}
+              onChange={handleTextChange}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              min={question.validation?.min}
+              max={question.validation?.max}
+              required={question.validation?.required}
+            />)}
+
+            {question.type === "select" && multiple && filteredOptions && (
+              <MultiSelectDropdown
+                name={code}
+                options={
+                  Array.isArray(filteredOptions)
+                    ? filteredOptions.map((opt) =>
+                        typeof opt === "string" ? opt : opt.text
+                      )
+                    : []
+                }
+                value={isTidakTahu ? "" : rawValue}
+                onChange={handleMultiSelectChangeEvent}
+                darkMode={darkMode}
+                placeholder={getPlaceholder()}
+              />
+            )}
+            {errors[question.code] && (
+              <div className="text-red-500 text-sm mt-2">
+                {errors[question.code]}
+              </div>
+            )}
+            <CustomRadioButton
+              name={question.code}
+              options={["Tidak tahu"]}
+              selected={isTidakTahu ? "Tidak tahu" : ""}
+              onChange={handleTidakTahu}
+              multiple={false}
+              darkMode={darkMode}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+          {/* Question Section */}
+          <div className="w-full md:w-1/3 dark:text-gray-300">
+            <span
+              className={`font-bold ${
+                darkMode ? "text-gray-200" : "text-[#565656]"
+              }`}
+            >
+              {replacePlaceholders(text, replacement)}
+            </span>
+
+            {additional_info && (
+              <>
+                {!ADDITIONAL_INFO_CODES.includes(code) && (
+                  <span
+                    className={`text-sm font-semibold ml-[5px] ${
+                      darkMode ? "text-gray-400" : "text-[#565656]"
+                    } my-2`}
+                  >
+                    {"(" + additional_info + ")"}
+                    {validation.required && (
+                      <span className="text-red-500 ml-[5px]">*</span>
+                    )}
+                  </span>
+                )}
+                {ADDITIONAL_INFO_CODES.includes(code) && renderAdditionalInfo()}
+              </>
+            )}
+
+            {!additional_info && validation.required && (
+              <span className="text-red-500 ml-[5px]">*</span>
+            )}
+
+            {instruction && (
+              <div
+                className={`mt-1 text-xs italic ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                {instruction}
+              </div>
+            )}
+
+            {code === "S006" && (
+              <div
+                className={`mt-1 text-xs italic ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                *Hanya menampilkan bulan hingga saat ini
+              </div>
+            )}
+          </div>
+
+          {/* Answer Section */}
+          <div className="flex-1">
+            {/* Feedback visual saat saving */}
+            {isSaving && (
+              <div className="text-blue-500 text-sm mt-2">Menyimpan...</div>
+            )}
+            {!isSaving && renderInput()}
+          </div>
+        </div>
+      )}
+      {errors[question.code] && (
+        <div className="text-red-500 text-sm mt-2">
+          {errors[question.code]}
+        </div>
+      )}
+    </>
   );
 };
 

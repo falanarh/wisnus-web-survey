@@ -4,11 +4,13 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useMemo,
 } from "react";
 import { Question } from "@/service/types/Question";
 import {
   submitSurveyResponse,
   getSurveySession,
+  updateTimeConsumed,
 } from "@/services/survey/surveyService";
 import { getUserData } from "@/services/auth";
 import { surveyQuestions } from "@/components/survey/data/surveyQuestions";
@@ -17,6 +19,7 @@ import { characteristicQuestions } from "@/components/survey/data/characteristic
 interface SurveyContextType {
   answers: Record<string, string>;
   errors: Record<string, string>;
+  activeQuestions: Question[];
   updateAnswer: (questionCode: string, value: string) => void;
   updateError: (questionCode: string, errorMessage: string) => void;
   clearError: (questionCode: string) => void;
@@ -54,21 +57,58 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
+  const activeQuestions = useMemo(() => {
+    const allQuestions = [...characteristicQuestions, ...surveyQuestions];
+    const activeQs: Question[] = [];
+
+    allQuestions.forEach(question => {
+      if (!question.depends_on || question.depends_on.length === 0) {
+        activeQs.push(question);
+        return;
+      }
+
+      const isDependentActive = question.depends_on.every((dep: { code: string; value?: string | string[]; value_not?: string | string[]; }) => {
+        const parentAnswer = answers[dep.code] || "";
+        if (!parentAnswer) return false;
+
+        const parentAnswers = parentAnswer.split(',').map(s => s.trim());
+
+        if (dep.value) {
+          const expectedValues = Array.isArray(dep.value) ? dep.value.map(String) : [String(dep.value)];
+          return expectedValues.some((val: string) => parentAnswers.includes(val));
+        }
+
+        if (dep.value_not) {
+          const forbiddenValues = Array.isArray(dep.value_not) ? dep.value_not.map(String) : [String(dep.value_not)];
+          return !forbiddenValues.some((val: string) => parentAnswers.includes(val));
+        }
+
+        return false;
+      });
+
+      if (isDependentActive) {
+        activeQs.push(question);
+      }
+    });
+
+    return activeQs;
+  }, [answers]);
+
   // Load survey session data on mount
   useEffect(() => {
+    const userData = getUserData();
+    if (userData?.activeSurveySessionId) {
+      setSessionId(userData.activeSurveySessionId); // Set sessionId langsung jika ada
+    }
     const loadSurveySession = async () => {
       try {
-        const userData = getUserData();
         if (!userData?.activeSurveySessionId) {
           setIsLoading(false);
           return;
         }
-
         const response = await getSurveySession(userData.activeSurveySessionId);
-
         if (response.success && response.data) {
           setSessionId(response.data._id);
-
           // Convert responses to answers format
           const sessionAnswers = response.data.responses.reduce(
             (acc, curr) => ({
@@ -77,7 +117,6 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
             }),
             {}
           );
-
           setAnswers(sessionAnswers);
         }
       } catch (error) {
@@ -86,7 +125,6 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     };
-
     loadSurveySession();
   }, []);
 
@@ -153,6 +191,47 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
 
         if (!response.success) {
           throw new Error(response.message);
+        }
+
+        // Update time consumed after successful answer submission
+        try {
+          // Get current time consumed from localStorage or use default
+          const currentTimeConsumed = (() => {
+            if (typeof window !== 'undefined') {
+              const stored = localStorage.getItem('timeConsumed');
+              if (stored) {
+                try {
+                  return JSON.parse(stored);
+                } catch (e) {
+                  console.error('Error parsing timeConsumed from localStorage:', e);
+                }
+              }
+            }
+            return { survei: 0, karakteristik: 0 };
+          })();
+
+          // Determine which tab the question belongs to
+          const isSurveyQuestion = surveyQuestions.some(q => q.code === questionCode);
+          const isCharacteristicQuestion = characteristicQuestions.some(q => q.code === questionCode);
+          
+          if (isSurveyQuestion || isCharacteristicQuestion) {
+            const tabKey = isSurveyQuestion ? 'survei' : 'karakteristik';
+            const updated = {
+              ...currentTimeConsumed,
+              [tabKey]: currentTimeConsumed[tabKey] + 1000 // Add 1 second for answering
+            };
+            
+            await updateTimeConsumed(sessionId, updated);
+            console.log(`[LOG] Update waktu tab '${tabKey}' karena menjawab pertanyaan:`, updated[tabKey], 'ms');
+            
+            // Update localStorage
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('timeConsumed', JSON.stringify(updated));
+            }
+          }
+        } catch (timeError) {
+          console.error('Error updating time consumed:', timeError);
+          // Don't throw error for time tracking failure
         }
       }
     } catch (error) {
@@ -315,7 +394,7 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     };
   };
 
-  const value = {
+  const contextValue = {
     answers,
     errors,
     updateAnswer,
@@ -326,15 +405,12 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
     validateQuestion,
     getCompletionStatus,
     sessionId,
+    isLoading,
+    activeQuestions,
   };
 
   return (
-    <SurveyContext.Provider
-      value={{
-        ...value,
-        isLoading,
-      }}
-    >
+    <SurveyContext.Provider value={contextValue}>
       {children}
     </SurveyContext.Provider>
   );

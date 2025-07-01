@@ -61,7 +61,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         <div className="fixed inset-0 flex items-center justify-center z-10">
           <div className="flex flex-col items-center">
             <Loader />
-            <p className="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat...</p>
+            {/* <p className="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat...</p> */}
           </div>
         </div>
       </div>
