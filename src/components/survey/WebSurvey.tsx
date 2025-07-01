@@ -252,9 +252,9 @@ const WebSurvey = () => {
       case 'persetujuan':
         return <PersetujuanTab darkMode={isDarkMode} />;
       case 'survei':
-        return <SurveiTab darkMode={isDarkMode} />;
+        return <SurveiTab />;
       case 'karakteristik':
-        return <KarakteristikTab darkMode={isDarkMode} />;
+        return <KarakteristikTab />;
       default:
         return <PersetujuanTab darkMode={isDarkMode} />;
     }
@@ -266,7 +266,7 @@ const WebSurvey = () => {
   }
 
   return (
-    <SurveyProvider>
+    <SurveyProvider sessionId={sessionId}>
       <SurveyLayout
         darkMode={isDarkMode}
         sidebarOpen={sidebarOpen}

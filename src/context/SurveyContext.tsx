@@ -49,13 +49,22 @@ export const useSurvey = () => {
 interface SurveyProviderProps {
   children: ReactNode;
   initialAnswers?: Record<string, string>;
+  sessionId?: string | null;
 }
 
-export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
+export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children, sessionId: propSessionId }) => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(propSessionId || null);
+
+  // Update sessionId when prop changes
+  useEffect(() => {
+    if (propSessionId && propSessionId !== sessionId) {
+      setSessionId(propSessionId);
+      console.log(`[CONTEXT] SessionId diupdate dari prop: ${propSessionId}`);
+    }
+  }, [propSessionId, sessionId]);
 
   const activeQuestions = useMemo(() => {
     const allQuestions = [...characteristicQuestions, ...surveyQuestions];
@@ -130,6 +139,9 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
 
   const updateAnswer = async (questionCode: string, value: string) => {
     try {
+      console.log(`[ANSWER] updateAnswer dipanggil: questionCode=${questionCode}, value=${value}`);
+      console.log(`[ANSWER] sessionId: ${sessionId}`);
+      
       setAnswers((prev) => ({
         ...prev,
         [questionCode]: value,
@@ -146,6 +158,7 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
       );
 
       if (!question) {
+        console.error(`[ANSWER] Question tidak ditemukan: ${questionCode}`);
         throw new Error("Question not found");
       }
 
@@ -167,7 +180,7 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
       if (question.type === "text") {
         const isValid = validateQuestion(question);
         if (!isValid) {
-          console.error("Validation failed for question:", questionCode);
+          console.error(`[ANSWER] Validation failed for question: ${questionCode}`);
           // Don't submit to API if validation fails
           return;
         }
@@ -184,14 +197,18 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
 
       // Submit to API if session exists and validation passed
       if (sessionId) {
+        console.log(`[ANSWER] sessionId ada, akan submit ke API...`);
         const response = await submitSurveyResponse(sessionId, {
           question_code: questionCode,
           valid_response: submitValue, // <-- array jika multiselect
         });
 
         if (!response.success) {
+          console.error(`[ANSWER] API response tidak berhasil:`, response.message);
           throw new Error(response.message);
         }
+
+        console.log(`[ANSWER] Jawaban berhasil disubmit ke database`);
 
         // Update time consumed after successful answer submission
         try {
@@ -233,9 +250,11 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children }) => {
           console.error('Error updating time consumed:', timeError);
           // Don't throw error for time tracking failure
         }
+      } else {
+        console.log(`[ANSWER] sessionId tidak ada, tidak akan submit ke API`);
       }
     } catch (error) {
-      console.error("Error updating answer:", error);
+      console.error(`[ANSWER] Error updating answer:`, error);
       // Only revert state if API call failed (not validation error)
       if (sessionId) {
         setAnswers((prev) => {
