@@ -8,6 +8,7 @@ import { useSurvey } from "@/context/SurveyContext";
 import { getCurrentMonthYear, replacePlaceholders } from "@/utils/functions";
 import CustomDropdown from "./CustomDropdown";
 import CustomRadioButton from "./CustomRadioButton"; // pastikan path sesuai
+import { updateTimeOnAnswer } from '../WebSurvey';
 
 const ADDITIONAL_INFO_CODES = [
   "KR004",
@@ -54,7 +55,7 @@ function formatNumberWithDots(value: string): string {
 }
 
 const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
-  const { answers, updateAnswer, errors, updateError, clearError } = useSurvey();
+  const { answers, updateAnswer, errors, updateError, clearError, sessionId, timeConsumed, setTimeConsumed, lastSwitchTime, activeTab } = useSurvey();
   const [rawValue, setRawValue] = useState(answers[question.code] || "");
   const [displayValue, setDisplayValue] = useState(formatNumberWithDots(answers[question.code] || ""));
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -116,9 +117,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
           if (answers[question.code] !== "") {
             try {
               await updateAnswer(question.code, "");
+              if (activeTab === 'survei' || activeTab === 'karakteristik') {
+                await updateTimeOnAnswer(
+                  activeTab,
+                  sessionId,
+                  timeConsumed,
+                  setTimeConsumed,
+                  lastSwitchTime
+                );
+              }
             } catch (error: unknown) {
-              // Handle potential error on clearing
-              if (error instanceof Error) setSubmitError(error.message);
+              if (error instanceof Error && !errors[question.code] && error.message !== 'Failed to fetch') setSubmitError(error.message || "Gagal menyimpan jawaban");
+              else if (!errors[question.code]) setSubmitError("Gagal menyimpan jawaban");
             }
           }
           return;
@@ -144,16 +154,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
             await updateAnswer(question.code, cleanedValue);
             setRawValue(cleanedValue);
             setDisplayValue(formatNumberWithDots(cleanedValue));
-          } catch (error: unknown) {
-            if (error instanceof Error) {
-              if (error.message.toLowerCase().includes('validation failed') || error.message.toLowerCase().includes('maximum value exceeded')) {
-                updateError(question.code, error.message);
-              } else {
-                setSubmitError(error.message || "Gagal menyimpan jawaban");
-              }
-            } else {
-              setSubmitError("Gagal menyimpan jawaban");
+            if (activeTab === 'survei' || activeTab === 'karakteristik') {
+              await updateTimeOnAnswer(
+                activeTab,
+                sessionId,
+                timeConsumed,
+                setTimeConsumed,
+                lastSwitchTime
+              );
             }
+          } catch (error: unknown) {
+            if (error instanceof Error && !errors[question.code] && error.message !== 'Failed to fetch') setSubmitError(error.message || "Gagal menyimpan jawaban");
+            else if (!errors[question.code]) setSubmitError("Gagal menyimpan jawaban");
           } finally {
             setIsSaving(false);
             setIsEditing(false); // Buka kunci
@@ -170,12 +182,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
           setIsSaving(true);
           try {
             await updateAnswer(question.code, inputValue);
-          } catch (error: unknown) {
-            if (error instanceof Error) {
-              setSubmitError(error.message || "Gagal menyimpan jawaban");
-            } else {
-              setSubmitError("Gagal menyimpan jawaban");
+            if (activeTab === 'survei' || activeTab === 'karakteristik') {
+              await updateTimeOnAnswer(
+                activeTab,
+                sessionId,
+                timeConsumed,
+                setTimeConsumed,
+                lastSwitchTime
+              );
             }
+          } catch (error: unknown) {
+            if (error instanceof Error && !errors[question.code] && error.message !== 'Failed to fetch') setSubmitError(error.message || "Gagal menyimpan jawaban");
+            else if (!errors[question.code]) setSubmitError("Gagal menyimpan jawaban");
           } finally {
             setIsSaving(false);
             setIsEditing(false); // Buka kunci
@@ -195,9 +213,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     setSubmitError(null);
     try {
       await updateAnswer(question.code, "Tidak tahu");
+      if (activeTab === 'survei' || activeTab === 'karakteristik') {
+        await updateTimeOnAnswer(
+          activeTab,
+          sessionId,
+          timeConsumed,
+          setTimeConsumed,
+          lastSwitchTime
+        );
+      }
     } catch (error: unknown) {
-      if (error instanceof Error) setSubmitError(error.message || "Gagal menyimpan jawaban");
-      else setSubmitError("Gagal menyimpan jawaban");
+      if (error instanceof Error && !errors[question.code] && error.message !== 'Failed to fetch') setSubmitError(error.message || "Gagal menyimpan jawaban");
+      else if (!errors[question.code]) setSubmitError("Gagal menyimpan jawaban");
     } finally {
       setIsSaving(false);
       setIsEditing(false); // Buka kunci
@@ -212,12 +239,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
     setIsSaving(true);
     try {
       await updateAnswer(question.code, newValue);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setSubmitError(error.message || "Gagal menyimpan jawaban");
-      } else {
-        setSubmitError("Gagal menyimpan jawaban");
+      if (activeTab === 'survei' || activeTab === 'karakteristik') {
+        await updateTimeOnAnswer(
+          activeTab,
+          sessionId,
+          timeConsumed,
+          setTimeConsumed,
+          lastSwitchTime
+        );
       }
+    } catch (error: unknown) {
+      if (error instanceof Error && !errors[question.code] && error.message !== 'Failed to fetch') setSubmitError(error.message || "Gagal menyimpan jawaban");
+      else if (!errors[question.code]) setSubmitError("Gagal menyimpan jawaban");
     } finally {
       setIsSaving(false);
       setIsEditing(false); // Buka kunci
@@ -234,9 +267,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({ question, darkMode }) => {
       setIsSaving(true);
       try {
         await updateAnswer(question.code, value);
+        if (activeTab === 'survei' || activeTab === 'karakteristik') {
+          await updateTimeOnAnswer(
+            activeTab,
+            sessionId,
+            timeConsumed,
+            setTimeConsumed,
+            lastSwitchTime
+          );
+        }
       } catch (error: unknown) {
-        if (error instanceof Error) setSubmitError(error.message || "Gagal menyimpan jawaban");
-        else setSubmitError("Gagal menyimpan jawaban");
+        if (error instanceof Error && !errors[question.code] && error.message !== 'Failed to fetch') setSubmitError(error.message || "Gagal menyimpan jawaban");
+        else if (!errors[question.code]) setSubmitError("Gagal menyimpan jawaban");
       } finally {
         setIsSaving(false);
         setIsEditing(false); // Buka kunci

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import NavTabs from './NavTabs';
+
 interface SurveyLayoutProps {
   children: React.ReactNode;
   darkMode: boolean;
@@ -12,7 +13,7 @@ interface SurveyLayoutProps {
   tabs: Array<{ id: string; label: string }>;
 }
 
-const SurveyLayout: React.FC<SurveyLayoutProps> = ({
+const SurveyLayout = forwardRef<HTMLDivElement, SurveyLayoutProps>(({
   children,
   darkMode,
   sidebarOpen,
@@ -20,7 +21,9 @@ const SurveyLayout: React.FC<SurveyLayoutProps> = ({
   activeTab,
   setActiveTab,
   tabs
-}) => {
+}, ref) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useImperativeHandle(ref, () => scrollRef.current as HTMLDivElement);
   return (
     <div className={`flex w-full min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Sidebar */}
@@ -43,7 +46,7 @@ const SurveyLayout: React.FC<SurveyLayoutProps> = ({
 
         {/* Content */}
         <section className="overflow-hidden h-[calc(100vh-89px)]">
-          <div className="flex flex-col h-full overflow-y-auto">
+          <div ref={scrollRef} className="flex flex-col h-full overflow-y-auto">
             {children}
           </div>
         </section>
@@ -58,6 +61,8 @@ const SurveyLayout: React.FC<SurveyLayoutProps> = ({
       </main>
     </div>
   );
-};
+});
+
+SurveyLayout.displayName = 'SurveyLayout';
 
 export default SurveyLayout;

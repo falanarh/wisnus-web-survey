@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { surveyQuestions } from '../data/surveyQuestions';
 import QuestionComponent from '../ui/QuestionComponent';
 import { useSurvey } from '@/context/SurveyContext';
-import { completeSurveySession } from "@/services/survey/surveyService";
+import { completeSurveySession, updateTimeConsumed } from "@/services/survey/surveyService";
 import { useRouter } from "next/navigation";
 import { getUserData } from '@/services/auth';
 import { useTheme } from '@/components/other/ThemeProvider';
+import ModalKonfirmasiSubmit from '../layout/ModalKonfirmasiSubmit';
 
 const SurveiTab: React.FC = () => {
-  const { isLoading, answers, errors, sessionId, activeQuestions } = useSurvey();
+  const { isLoading, answers, errors, sessionId, activeQuestions, timeConsumed, setTimeConsumed, lastSwitchTime } = useSurvey();
   const [stats, setStats] = useState({
     answered: 0,
     blank: 0,
@@ -18,6 +19,7 @@ const SurveiTab: React.FC = () => {
   const router = useRouter();
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (!activeQuestions) return;
@@ -41,8 +43,37 @@ const SurveiTab: React.FC = () => {
     });
   }, [answers, errors, activeQuestions]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
   const handleSubmit = async () => {
     try {
+      // Ambil timeConsumed terbaru dari localStorage/context
+      let currentTimeConsumed = timeConsumed;
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('timeConsumed');
+        if (stored) {
+          try {
+            currentTimeConsumed = JSON.parse(stored);
+          } catch {}
+        }
+      }
+      // Update waktu konsumsi tab survei sebelum submit
+      const now = Date.now();
+      const timeSpent = now - lastSwitchTime.current;
+      const updated = {
+        ...currentTimeConsumed,
+        survei: currentTimeConsumed['survei'] + timeSpent
+      };
+      if (sessionId) {
+        await updateTimeConsumed(sessionId, updated);
+      }
+      setTimeConsumed(updated);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('timeConsumed', JSON.stringify(updated));
+      }
+      lastSwitchTime.current = now;
       let sid = sessionId;
       if (!sid) {
         const userData = getUserData();
@@ -116,7 +147,7 @@ const SurveiTab: React.FC = () => {
               ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-70' 
               : 'bg-teal-400 dark:bg-teal-600 hover:bg-teal-500 dark:hover:bg-teal-500'
           } text-white`}
-          onClick={handleSubmit}
+          onClick={() => setShowConfirm(true)}
           disabled={isSubmitDisabled}
         >
           {isSubmitDisabled ? `Can't Submit (${stats.error} Error)` : 'Submit'}
@@ -127,6 +158,15 @@ const SurveiTab: React.FC = () => {
           </p>
         )}
       </div>
+      <ModalKonfirmasiSubmit
+        open={showConfirm}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={async () => {
+          setShowConfirm(false);
+          await handleSubmit();
+        }}
+        sessionId={sessionId}
+      />
     </div>
   );
 };

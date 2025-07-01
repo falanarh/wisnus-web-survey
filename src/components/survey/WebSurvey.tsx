@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import PersetujuanTab from './tabs/PersetujuanTab';
 import SurveiTab from './tabs/SurveiTab';
@@ -51,6 +51,8 @@ const WebSurvey = () => {
   const lastTab = React.useRef('persetujuan');
   const lastSwitchTime = React.useRef(Date.now());
   const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Ambil sessionId dari userData
   useEffect(() => {
@@ -260,7 +262,15 @@ const WebSurvey = () => {
     }
   };
 
-  // Prevent hydration mismatch
+  useEffect(() => {
+    if (activeTab === 'survei' || activeTab === 'karakteristik') {
+      const el = scrollContainerRef.current;
+      if (el) {
+        el.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    }
+  }, [activeTab]);
+
   if (!mounted) {
     return null;
   }
@@ -268,6 +278,7 @@ const WebSurvey = () => {
   return (
     <SurveyProvider sessionId={sessionId}>
       <SurveyLayout
+        ref={scrollContainerRef}
         darkMode={isDarkMode}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -287,6 +298,34 @@ const WebSurvey = () => {
       </SurveyLayout>
     </SurveyProvider>
   );
+};
+
+// Fungsi untuk update waktu konsumsi tab saat user menjawab
+export const updateTimeOnAnswer = async (
+  tabKey: 'survei' | 'karakteristik',
+  sessionId: string | null,
+  timeConsumed: { survei: number; karakteristik: number },
+  setTimeConsumed: React.Dispatch<React.SetStateAction<{ survei: number; karakteristik: number }>>,
+  lastSwitchTime: React.MutableRefObject<number>
+) => {
+  const now = Date.now();
+  const timeSpent = now - lastSwitchTime.current;
+  const updated = {
+    ...timeConsumed,
+    [tabKey]: timeConsumed[tabKey] + timeSpent
+  };
+  if (sessionId) {
+    try {
+      await updateTimeConsumed(sessionId, updated);
+    } catch {
+      // Optional: log error
+    }
+  }
+  setTimeConsumed(updated);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('timeConsumed', JSON.stringify(updated));
+  }
+  lastSwitchTime.current = now;
 };
 
 export default WebSurvey;

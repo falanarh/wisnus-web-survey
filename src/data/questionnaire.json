@@ -24,7 +24,7 @@
                         "text": "Usia",
                         "type": "text",
                         "unit": "tahun",
-                        "additional_info": "Berdasarkan ulang tahun terakhir",
+                        "additional_info": "tahun",
                         "validation": {
                             "required": true,
                             "input_type": "number",

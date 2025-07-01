@@ -15,7 +15,7 @@ export const characteristicQuestions: Question[] = [
     text: "Usia",
     type: "text",
     unit: "tahun",
-    additional_info: "Berdasarkan ulang tahun terakhir",
+    additional_info: "tahun",
     validation: {
       required: false,
       input_type: "number",

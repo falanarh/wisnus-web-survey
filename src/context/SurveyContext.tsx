@@ -10,7 +10,6 @@ import { Question } from "@/service/types/Question";
 import {
   submitSurveyResponse,
   getSurveySession,
-  updateTimeConsumed,
 } from "@/services/survey/surveyService";
 import { getUserData } from "@/services/auth";
 import { surveyQuestions } from "@/components/survey/data/surveyQuestions";
@@ -34,6 +33,10 @@ interface SurveyContextType {
   };
   sessionId: string | null;
   isLoading: boolean;
+  timeConsumed: { survei: number; karakteristik: number };
+  setTimeConsumed: React.Dispatch<React.SetStateAction<{ survei: number; karakteristik: number }>>;
+  lastSwitchTime: React.MutableRefObject<number>;
+  activeTab: string;
 }
 
 const SurveyContext = createContext<SurveyContextType | undefined>(undefined);
@@ -57,6 +60,21 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children, sessio
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(propSessionId || null);
+  const [timeConsumed, setTimeConsumed] = useState<{ survei: number; karakteristik: number }>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('timeConsumed');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.error('Error parsing timeConsumed from localStorage:', e);
+        }
+      }
+    }
+    return { survei: 0, karakteristik: 0 };
+  });
+  const lastSwitchTime = React.useRef(Date.now());
+  const [activeTab] = useState('persetujuan');
 
   // Update sessionId when prop changes
   useEffect(() => {
@@ -209,47 +227,6 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children, sessio
         }
 
         console.log(`[ANSWER] Jawaban berhasil disubmit ke database`);
-
-        // Update time consumed after successful answer submission
-        try {
-          // Get current time consumed from localStorage or use default
-          const currentTimeConsumed = (() => {
-            if (typeof window !== 'undefined') {
-              const stored = localStorage.getItem('timeConsumed');
-              if (stored) {
-                try {
-                  return JSON.parse(stored);
-                } catch (e) {
-                  console.error('Error parsing timeConsumed from localStorage:', e);
-                }
-              }
-            }
-            return { survei: 0, karakteristik: 0 };
-          })();
-
-          // Determine which tab the question belongs to
-          const isSurveyQuestion = surveyQuestions.some(q => q.code === questionCode);
-          const isCharacteristicQuestion = characteristicQuestions.some(q => q.code === questionCode);
-          
-          if (isSurveyQuestion || isCharacteristicQuestion) {
-            const tabKey = isSurveyQuestion ? 'survei' : 'karakteristik';
-            const updated = {
-              ...currentTimeConsumed,
-              [tabKey]: currentTimeConsumed[tabKey] + 1000 // Add 1 second for answering
-            };
-            
-            await updateTimeConsumed(sessionId, updated);
-            console.log(`[LOG] Update waktu tab '${tabKey}' karena menjawab pertanyaan:`, updated[tabKey], 'ms');
-            
-            // Update localStorage
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('timeConsumed', JSON.stringify(updated));
-            }
-          }
-        } catch (timeError) {
-          console.error('Error updating time consumed:', timeError);
-          // Don't throw error for time tracking failure
-        }
       } else {
         console.log(`[ANSWER] sessionId tidak ada, tidak akan submit ke API`);
       }
@@ -426,6 +403,10 @@ export const SurveyProvider: React.FC<SurveyProviderProps> = ({ children, sessio
     sessionId,
     isLoading,
     activeQuestions,
+    timeConsumed,
+    setTimeConsumed,
+    lastSwitchTime,
+    activeTab,
   };
 
   return (
