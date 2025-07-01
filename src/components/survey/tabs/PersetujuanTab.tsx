@@ -7,7 +7,7 @@ interface PersetujuanTabProps {
 const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
   return (
     <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-4 md:p-6`}>
-      <div className={`flex flex-col justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-4 md:p-6 rounded-md shadow-sm ${darkMode ? 'text-gray-300' : 'text-[#565656]'} text-justify`}>
+      <div className={`flex flex-col justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-4 md:p-6 mb-16 md:mb-0 rounded-md shadow-sm ${darkMode ? 'text-gray-300' : 'text-[#565656]'} text-justify`}>
         <h2 className={`mb-4 text-base md:text-lg font-medium`}>
           Hai, yuk ikut berpartisipasi dalam Survei Wisatawan Nusantara 2025 yang diselenggarakan oleh Badan Pusat Statistik (BPS). Anda hanya perlu meluangkan waktu sekitar 10 (sepuluh) menit untuk mengisi survei ini.
         </h2>
