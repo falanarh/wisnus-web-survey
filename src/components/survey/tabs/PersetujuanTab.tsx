@@ -46,7 +46,7 @@ const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
         </p>
       </div>
 
-      <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-5 rounded-md shadow-sm my-6 ${darkMode ? 'text-gray-300' : 'text-[#565656]'} text-justify`}>
+      {/* <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-5 rounded-md shadow-sm my-6 ${darkMode ? 'text-gray-300' : 'text-[#565656]'} text-justify`}>
         <h3 className={`text-center font-semibold mb-3 text-lg`}>Persetujuan Penggunaan Data Pribadi</h3>
         <h4 className={`mb-4 text-base`}>Dari Responden Survei Wisatawan Nusantara 2025</h4>
 
@@ -59,7 +59,7 @@ const PersetujuanTab: React.FC<PersetujuanTabProps> = ({ darkMode }) => {
           <li>Kode Provinsi dan Kabupaten/Kota asal, Kode Provinsi dan Kabupaten/Kota tujuan perjalanan (Untuk selanjutnya disebut &quot;Kode Lokasi&quot;)</li>
           <li>Data terkait perjalanan pada periode Januari-Maret 2025</li>
         </ol>
-      </div>
+      </div> */}
     </div>
   );
 };
