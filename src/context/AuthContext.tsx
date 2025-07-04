@@ -149,7 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logoutUser();
     setUser(null);
     setAuthenticated(false);
-    
+    // Hapus semua data localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+    }
     // Redirect to login page
     window.location.href = '/auth?tab=login';
   };

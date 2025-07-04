@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import ThemeSwitch from '../ui/ThemeSwitch';
 import { useTheme } from '@/components/other/ThemeProvider';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -13,6 +14,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
+  const { logout } = useAuth();
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => !prev);
@@ -43,8 +45,14 @@ const Header: React.FC<HeaderProps> = ({
       </h1>
 
       {/* Dark Mode Toggle */}
-      <div className="flex items-center">
+      <div className="flex flex-col md:flex-row items-center gap-2">
         <ThemeSwitch/>
+        <button
+          onClick={logout}
+          className={`ml-2 px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition`}
+        >
+          Logout
+        </button>
       </div>
     </header>
   );
