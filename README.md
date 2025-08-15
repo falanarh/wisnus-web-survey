@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wisnus Web Survey
 
-## Getting Started
+![Logo BPS](public/bps_logo.png)
 
-First, run the development server:
+Wisnus Web Survey adalah platform survei online modern yang dirancang untuk memudahkan pengumpulan dan analisis data. Proyek ini dibangun menggunakan teknologi web terbaru untuk memberikan pengalaman pengguna yang cepat, responsif, dan intuitif.
+
+## ✨ Fitur Utama
+
+- **Autentikasi Pengguna**: Sistem login dan registrasi yang aman untuk responden dan administrator.
+- **Manajemen Survei**: Membuat, mengedit, dan mengelola berbagai jenis survei dengan mudah.
+- **Pengisian Survei Interaktif**: Antarmuka yang ramah pengguna untuk mengisi survei.
+- **Desain Responsif**: Tampilan yang optimal di berbagai perangkat, mulai dari desktop hingga mobile.
+
+## 🛠️ Teknologi yang Digunakan
+
+Proyek ini dibangun dengan tumpukan teknologi modern, antara lain:
+
+- **Framework**: [Next.js](https://nextjs.org/) - React framework untuk aplikasi web modern.
+- **Bahasa**: [TypeScript](https://www.typescriptlang.org/) - Menambahkan tipe statis pada JavaScript.
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) - Utilitas CSS untuk desain yang cepat dan kustom.
+- **UI Components**: [Lucide React](https://lucide.dev/) & [Heroicons](https://heroicons.com/) untuk ikonografi.
+- **Animasi**: [Framer Motion](https://www.framer.com/motion/) untuk animasi antarmuka yang halus.
+
+## 🚀 Instalasi & Menjalankan Proyek
+
+Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan lokal Anda.
+
+**1. Clone Repositori**
+
+```bash
+git clone https://github.com/falanarh/wisnus-web-survey.git
+cd wisnus-web-survey
+```
+
+**2. Instal Dependensi**
+
+Pastikan Anda memiliki Node.js dan npm terinstal. Jalankan perintah berikut di root direktori proyek:
+
+```bash
+npm install
+```
+
+**3. Jalankan Server Pengembangan**
+
+Proyek ini menggunakan Turbopack untuk pengembangan yang lebih cepat.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**4. Buka di Browser**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda untuk melihat aplikasi berjalan.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📂 Struktur Proyek
 
-## Learn More
+Struktur direktori utama proyek ini adalah sebagai berikut:
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+wisnus-web-survey/
+├── public/         # Aset statis (gambar, ikon)
+├── src/
+│   ├── app/        # Halaman dan routing utama (App Router)
+│   ├── components/ # Komponen React yang dapat digunakan kembali
+│   ├── context/    # Konteks React untuk manajemen state global
+│   └── css/        # File CSS global
+├── .gitignore
+├── next.config.ts  # Konfigurasi Next.js
+├── package.json    # Dependensi dan skrip proyek
+└── README.md
+```
